@@ -25,35 +25,56 @@ export default function Diagnostico() {
     }
   };
 
-  const simulateAnalysis = () => {
+  const analyzeWithAI = async () => {
+    if (!selectedImage) return;
+    
     setIsAnalyzing(true);
     
-    // Simular análise de IA
-    setTimeout(() => {
+    try {
+      const response = await fetch('/supabase/functions/v1/analyze-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageBase64: selectedImage,
+          fieldNotes: fieldNotes,
+          animalType: 'suinos'
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success && data.analysis) {
+        setAnalysisResult({
+          status: "completed",
+          confidence: data.analysis.confidence,
+          findings: data.analysis.findings,
+          products: data.analysis.products,
+          summary: data.analysis.summary
+        });
+        
+        toast({
+          title: "Análise concluída",
+          description: "Diagnóstico nutricional processado com sucesso",
+        });
+      } else {
+        throw new Error(data.error || 'Erro na análise');
+      }
+    } catch (error) {
+      console.error('Erro na análise:', error);
+      
+      // Fallback para análise simulada
       setAnalysisResult({
         status: "completed",
-        confidence: 87,
+        confidence: 75,
         findings: [
           {
             type: "warning",
-            title: "Possível deficiência de fibra",
-            description: "Fezes muito formadas indicam baixo teor de fibra na dieta",
-            recommendation: "Aumentar percentual de fibra bruta em 2-3%",
+            title: "Análise básica realizada",
+            description: "Sistema funcionando em modo simulado. Integração com IA será ativada em breve.",
+            recommendation: "Continue monitorando e consulte um especialista",
             severity: "medium"
-          },
-          {
-            type: "success",
-            title: "Coloração normal",
-            description: "Cor das fezes dentro do padrão esperado",
-            recommendation: "Manter formulação atual para pigmentação",
-            severity: "low"
-          },
-          {
-            type: "info",
-            title: "Consistência adequada",
-            description: "Textura das fezes indica boa digestibilidade",
-            recommendation: "Digestibilidade satisfatória, manter protocolo",
-            severity: "low"
           }
         ],
         products: [
@@ -62,22 +83,18 @@ export default function Diagnostico() {
             line: "Probionutri",
             dosage: "2g/kg de ração",
             benefit: "Melhora digestibilidade da fibra"
-          },
-          {
-            name: "Receita Especial Fibra+",
-            line: "Receita Especial",
-            dosage: "1.5g/kg de ração",
-            benefit: "Balanceamento ideal de fibras"
           }
         ]
       });
-      setIsAnalyzing(false);
       
       toast({
-        title: "Análise concluída",
-        description: "Diagnóstico nutricional processado com sucesso",
+        title: "Análise em modo simulado",
+        description: "Funcionalidade completa será ativada em breve",
+        variant: "destructive",
       });
-    }, 3000);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   return (
@@ -160,7 +177,7 @@ export default function Diagnostico() {
               variant="hero" 
               className="w-full" 
               disabled={!selectedImage || isAnalyzing}
-              onClick={simulateAnalysis}
+              onClick={analyzeWithAI}
             >
               {isAnalyzing ? (
                 <>

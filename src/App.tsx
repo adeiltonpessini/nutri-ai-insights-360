@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Diagnostico from "./pages/Diagnostico";
 import Produtos from "./pages/Produtos";
 import Sustentabilidade from "./pages/Sustentabilidade";
+import Simulador from "./pages/Simulador";
 import Auth from "./pages/Auth";
 import Propriedades from "./pages/Propriedades";
 import Relatorios from "./pages/Relatorios";
@@ -32,7 +33,7 @@ const App = () => (
               <Route path="produtos" element={<Produtos />} />
               <Route path="sustentabilidade" element={<Sustentabilidade />} />
               <Route path="propriedades" element={<Propriedades />} />
-              <Route path="simulador" element={<div className="p-6"><h1 className="text-2xl font-bold">Simulador de Ração</h1><p className="text-muted-foreground">Em desenvolvimento...</p></div>} />
+              <Route path="simulador" element={<Simulador />} />
               <Route path="relatorios" element={<Relatorios />} />
               <Route path="configuracoes" element={<div className="p-6"><h1 className="text-2xl font-bold">Configurações</h1><p className="text-muted-foreground">Em desenvolvimento...</p></div>} />
             </Route>

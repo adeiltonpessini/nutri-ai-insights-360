@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { NotificationToast } from "@/components/ui/notification-toast";
 
 export function Layout() {
   return (
@@ -21,6 +22,7 @@ export function Layout() {
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <NotificationToast />
               <div className="text-sm text-muted-foreground">
                 Bem-vindo, <span className="font-medium text-foreground">Dr. João Silva</span>
               </div>
