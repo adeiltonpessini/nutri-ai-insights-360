@@ -2,8 +2,20 @@ import { Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { NotificationToast } from "@/components/ui/notification-toast";
+import { CompanySelector } from "@/components/CompanySelector";
+import { useCompany } from "@/contexts/CompanyContext";
 
 export function Layout() {
+  const { currentCompany, isLoading } = useCompany();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -22,6 +34,7 @@ export function Layout() {
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <CompanySelector />
               <NotificationToast />
               <div className="text-sm text-muted-foreground">
                 Bem-vindo, <span className="font-medium text-foreground">Dr. João Silva</span>

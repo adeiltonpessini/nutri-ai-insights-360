@@ -9,8 +9,149 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      companies: {
+        Row: {
+          address: string | null
+          created_at: string
+          description: string | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          name: string
+          phone: string | null
+          slug: string
+          subscription_expires_at: string | null
+          subscription_plan: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name: string
+          phone?: string | null
+          slug: string
+          subscription_expires_at?: string | null
+          subscription_plan?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          slug?: string
+          subscription_expires_at?: string | null
+          subscription_plan?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      company_products: {
+        Row: {
+          benefits: Json | null
+          category: string
+          certifications: Json | null
+          company_id: string
+          composition: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          images: Json | null
+          is_active: boolean | null
+          is_featured: boolean | null
+          min_order_quantity: number | null
+          name: string
+          price: number | null
+          specifications: Json | null
+          stock_quantity: number | null
+          storage_instructions: string | null
+          subcategory: string | null
+          target_phase: Json | null
+          target_species: Json | null
+          unit: string
+          updated_at: string
+          usage_instructions: string | null
+        }
+        Insert: {
+          benefits?: Json | null
+          category: string
+          certifications?: Json | null
+          company_id: string
+          composition?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          images?: Json | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          min_order_quantity?: number | null
+          name: string
+          price?: number | null
+          specifications?: Json | null
+          stock_quantity?: number | null
+          storage_instructions?: string | null
+          subcategory?: string | null
+          target_phase?: Json | null
+          target_species?: Json | null
+          unit: string
+          updated_at?: string
+          usage_instructions?: string | null
+        }
+        Update: {
+          benefits?: Json | null
+          category?: string
+          certifications?: Json | null
+          company_id?: string
+          composition?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          images?: Json | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          min_order_quantity?: number | null
+          name?: string
+          price?: number | null
+          specifications?: Json | null
+          stock_quantity?: number | null
+          storage_instructions?: string | null
+          subcategory?: string | null
+          target_phase?: Json | null
+          target_species?: Json | null
+          unit?: string
+          updated_at?: string
+          usage_instructions?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_products_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       diagnosticos: {
         Row: {
+          company_id: string | null
           confianca_ia: number | null
           created_at: string
           id: string
@@ -24,6 +165,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          company_id?: string | null
           confianca_ia?: number | null
           created_at?: string
           id?: string
@@ -37,6 +179,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          company_id?: string | null
           confianca_ia?: number | null
           created_at?: string
           id?: string
@@ -51,6 +194,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "diagnosticos_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "diagnosticos_lote_id_fkey"
             columns: ["lote_id"]
             isOneToOne: false
@@ -61,6 +211,7 @@ export type Database = {
       }
       formulacoes: {
         Row: {
+          company_id: string | null
           created_at: string
           custo_por_kg: number | null
           especie: string
@@ -75,6 +226,7 @@ export type Database = {
           valores_nutricionais: Json
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           custo_por_kg?: number | null
           especie: string
@@ -89,6 +241,7 @@ export type Database = {
           valores_nutricionais: Json
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           custo_por_kg?: number | null
           especie?: string
@@ -102,10 +255,19 @@ export type Database = {
           user_id?: string
           valores_nutricionais?: Json
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "formulacoes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lotes: {
         Row: {
+          company_id: string | null
           created_at: string
           data_inicio: string
           especie: string
@@ -123,6 +285,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           data_inicio: string
           especie: string
@@ -140,6 +303,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           data_inicio?: string
           especie?: string
@@ -158,6 +322,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "lotes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "lotes_propriedade_id_fkey"
             columns: ["propriedade_id"]
             isOneToOne: false
@@ -168,6 +339,7 @@ export type Database = {
       }
       performance_historico: {
         Row: {
+          company_id: string | null
           consumo_racao_kg: number | null
           conversao_alimentar: number | null
           created_at: string
@@ -181,6 +353,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          company_id?: string | null
           consumo_racao_kg?: number | null
           conversao_alimentar?: number | null
           created_at?: string
@@ -194,6 +367,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          company_id?: string | null
           consumo_racao_kg?: number | null
           conversao_alimentar?: number | null
           created_at?: string
@@ -208,6 +382,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "performance_historico_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "performance_historico_lote_id_fkey"
             columns: ["lote_id"]
             isOneToOne: false
@@ -219,6 +400,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          company_id: string | null
           created_at: string
           empresa: string | null
           id: string
@@ -229,6 +411,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          company_id?: string | null
           created_at?: string
           empresa?: string | null
           id?: string
@@ -239,6 +422,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          company_id?: string | null
           created_at?: string
           empresa?: string | null
           id?: string
@@ -247,12 +431,21 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       propriedades: {
         Row: {
           area_hectares: number | null
           capacidade_animais: number | null
+          company_id: string | null
           created_at: string
           endereco: string | null
           id: string
@@ -264,6 +457,7 @@ export type Database = {
         Insert: {
           area_hectares?: number | null
           capacidade_animais?: number | null
+          company_id?: string | null
           created_at?: string
           endereco?: string | null
           id?: string
@@ -275,6 +469,7 @@ export type Database = {
         Update: {
           area_hectares?: number | null
           capacidade_animais?: number | null
+          company_id?: string | null
           created_at?: string
           endereco?: string | null
           id?: string
@@ -283,17 +478,67 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "propriedades_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { user_uuid: string; comp_id: string }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      user_has_company_access: {
+        Args: { user_uuid: string; comp_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "super_admin" | "company_admin" | "veterinario" | "cliente"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -408,6 +653,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["super_admin", "company_admin", "veterinario", "cliente"],
+    },
   },
 } as const
