@@ -7,538 +7,329 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instanciate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
+  }
   public: {
     Tables: {
-      companies: {
+      animais: {
         Row: {
-          address: string | null
-          created_at: string
-          description: string | null
-          email: string | null
+          created_at: string | null
           id: string
-          is_active: boolean | null
-          logo_url: string | null
-          name: string
-          phone: string | null
-          slug: string
-          subscription_expires_at: string | null
-          subscription_plan: string | null
-          updated_at: string
-          website: string | null
+          idade: number | null
+          nome: string
+          peso: number | null
+          proprietario_id: string | null
+          raca: string | null
+          status_saude: Database["public"]["Enums"]["health_status"] | null
+          tipo: Database["public"]["Enums"]["animal_type"]
+          updated_at: string | null
         }
         Insert: {
-          address?: string | null
-          created_at?: string
-          description?: string | null
-          email?: string | null
+          created_at?: string | null
           id?: string
-          is_active?: boolean | null
-          logo_url?: string | null
-          name: string
-          phone?: string | null
-          slug: string
-          subscription_expires_at?: string | null
-          subscription_plan?: string | null
-          updated_at?: string
-          website?: string | null
+          idade?: number | null
+          nome: string
+          peso?: number | null
+          proprietario_id?: string | null
+          raca?: string | null
+          status_saude?: Database["public"]["Enums"]["health_status"] | null
+          tipo: Database["public"]["Enums"]["animal_type"]
+          updated_at?: string | null
         }
         Update: {
-          address?: string | null
-          created_at?: string
-          description?: string | null
-          email?: string | null
+          created_at?: string | null
           id?: string
-          is_active?: boolean | null
-          logo_url?: string | null
-          name?: string
-          phone?: string | null
-          slug?: string
-          subscription_expires_at?: string | null
-          subscription_plan?: string | null
-          updated_at?: string
-          website?: string | null
+          idade?: number | null
+          nome?: string
+          peso?: number | null
+          proprietario_id?: string | null
+          raca?: string | null
+          status_saude?: Database["public"]["Enums"]["health_status"] | null
+          tipo?: Database["public"]["Enums"]["animal_type"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "animais_proprietario_id_fkey"
+            columns: ["proprietario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      empresas: {
+        Row: {
+          cnpj: string
+          created_at: string | null
+          id: string
+          nome: string
+          tipo_empresa: string
+          updated_at: string | null
+        }
+        Insert: {
+          cnpj: string
+          created_at?: string | null
+          id?: string
+          nome: string
+          tipo_empresa: string
+          updated_at?: string | null
+        }
+        Update: {
+          cnpj?: string
+          created_at?: string | null
+          id?: string
+          nome?: string
+          tipo_empresa?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
-      company_products: {
+      historico_medico: {
         Row: {
-          benefits: Json | null
-          category: string
-          certifications: Json | null
-          company_id: string
-          composition: Json | null
-          created_at: string
-          description: string | null
+          animal_id: string | null
+          created_at: string | null
+          data_consulta: string
+          diagnostico: string | null
           id: string
-          image_url: string | null
-          images: Json | null
-          is_active: boolean | null
-          is_featured: boolean | null
-          min_order_quantity: number | null
-          name: string
-          price: number | null
-          specifications: Json | null
-          stock_quantity: number | null
-          storage_instructions: string | null
-          subcategory: string | null
-          target_phase: Json | null
-          target_species: Json | null
-          unit: string
-          updated_at: string
-          usage_instructions: string | null
-        }
-        Insert: {
-          benefits?: Json | null
-          category: string
-          certifications?: Json | null
-          company_id: string
-          composition?: Json | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          images?: Json | null
-          is_active?: boolean | null
-          is_featured?: boolean | null
-          min_order_quantity?: number | null
-          name: string
-          price?: number | null
-          specifications?: Json | null
-          stock_quantity?: number | null
-          storage_instructions?: string | null
-          subcategory?: string | null
-          target_phase?: Json | null
-          target_species?: Json | null
-          unit: string
-          updated_at?: string
-          usage_instructions?: string | null
-        }
-        Update: {
-          benefits?: Json | null
-          category?: string
-          certifications?: Json | null
-          company_id?: string
-          composition?: Json | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          images?: Json | null
-          is_active?: boolean | null
-          is_featured?: boolean | null
-          min_order_quantity?: number | null
-          name?: string
-          price?: number | null
-          specifications?: Json | null
-          stock_quantity?: number | null
-          storage_instructions?: string | null
-          subcategory?: string | null
-          target_phase?: Json | null
-          target_species?: Json | null
-          unit?: string
-          updated_at?: string
-          usage_instructions?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "company_products_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      diagnosticos: {
-        Row: {
-          company_id: string | null
-          confianca_ia: number | null
-          created_at: string
-          id: string
-          imagem_url: string | null
-          lote_id: string | null
           observacoes: string | null
-          recomendacoes: Json | null
-          resultados: Json | null
-          status: string
-          tipo_diagnostico: string
-          user_id: string
+          peso_atual: number | null
+          veterinario_id: string | null
         }
         Insert: {
-          company_id?: string | null
-          confianca_ia?: number | null
-          created_at?: string
+          animal_id?: string | null
+          created_at?: string | null
+          data_consulta: string
+          diagnostico?: string | null
           id?: string
-          imagem_url?: string | null
-          lote_id?: string | null
           observacoes?: string | null
-          recomendacoes?: Json | null
-          resultados?: Json | null
-          status?: string
-          tipo_diagnostico: string
-          user_id: string
+          peso_atual?: number | null
+          veterinario_id?: string | null
         }
         Update: {
-          company_id?: string | null
-          confianca_ia?: number | null
-          created_at?: string
+          animal_id?: string | null
+          created_at?: string | null
+          data_consulta?: string
+          diagnostico?: string | null
           id?: string
-          imagem_url?: string | null
-          lote_id?: string | null
           observacoes?: string | null
-          recomendacoes?: Json | null
-          resultados?: Json | null
-          status?: string
-          tipo_diagnostico?: string
-          user_id?: string
+          peso_atual?: number | null
+          veterinario_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "diagnosticos_company_id_fkey"
-            columns: ["company_id"]
+            foreignKeyName: "historico_medico_animal_id_fkey"
+            columns: ["animal_id"]
             isOneToOne: false
-            referencedRelation: "companies"
+            referencedRelation: "animais"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "diagnosticos_lote_id_fkey"
-            columns: ["lote_id"]
+            foreignKeyName: "historico_medico_veterinario_id_fkey"
+            columns: ["veterinario_id"]
             isOneToOne: false
-            referencedRelation: "lotes"
+            referencedRelation: "usuarios"
             referencedColumns: ["id"]
           },
         ]
       }
-      formulacoes: {
+      metricas_saude: {
         Row: {
-          company_id: string | null
-          created_at: string
-          custo_por_kg: number | null
-          especie: string
-          fase: string
-          id: string
-          ingredientes: Json
-          is_favorita: boolean | null
-          nome: string
-          observacoes: string | null
-          updated_at: string
-          user_id: string
-          valores_nutricionais: Json
-        }
-        Insert: {
-          company_id?: string | null
-          created_at?: string
-          custo_por_kg?: number | null
-          especie: string
-          fase: string
-          id?: string
-          ingredientes: Json
-          is_favorita?: boolean | null
-          nome: string
-          observacoes?: string | null
-          updated_at?: string
-          user_id: string
-          valores_nutricionais: Json
-        }
-        Update: {
-          company_id?: string | null
-          created_at?: string
-          custo_por_kg?: number | null
-          especie?: string
-          fase?: string
-          id?: string
-          ingredientes?: Json
-          is_favorita?: boolean | null
-          nome?: string
-          observacoes?: string | null
-          updated_at?: string
-          user_id?: string
-          valores_nutricionais?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "formulacoes_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      lotes: {
-        Row: {
-          company_id: string | null
-          created_at: string
-          data_inicio: string
-          especie: string
-          id: string
-          idade_media_dias: number | null
-          nome: string
-          objetivo: string
-          peso_medio_atual: number | null
-          peso_medio_inicial: number | null
-          propriedade_id: string
-          quantidade_animais: number
-          raca: string | null
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          company_id?: string | null
-          created_at?: string
-          data_inicio: string
-          especie: string
-          id?: string
-          idade_media_dias?: number | null
-          nome: string
-          objetivo: string
-          peso_medio_atual?: number | null
-          peso_medio_inicial?: number | null
-          propriedade_id: string
-          quantidade_animais: number
-          raca?: string | null
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          company_id?: string | null
-          created_at?: string
-          data_inicio?: string
-          especie?: string
-          id?: string
-          idade_media_dias?: number | null
-          nome?: string
-          objetivo?: string
-          peso_medio_atual?: number | null
-          peso_medio_inicial?: number | null
-          propriedade_id?: string
-          quantidade_animais?: number
-          raca?: string | null
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lotes_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "lotes_propriedade_id_fkey"
-            columns: ["propriedade_id"]
-            isOneToOne: false
-            referencedRelation: "propriedades"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      performance_historico: {
-        Row: {
-          company_id: string | null
-          consumo_racao_kg: number | null
-          conversao_alimentar: number | null
-          created_at: string
+          animal_id: string | null
+          condicao_corporal: number | null
+          created_at: string | null
           data_medicao: string
-          ganho_peso_diario: number | null
           id: string
-          lote_id: string
-          mortalidade_periodo: number | null
+          nivel_atividade: string | null
           observacoes: string | null
-          peso_medio: number | null
-          user_id: string
+          peso: number | null
         }
         Insert: {
-          company_id?: string | null
-          consumo_racao_kg?: number | null
-          conversao_alimentar?: number | null
-          created_at?: string
+          animal_id?: string | null
+          condicao_corporal?: number | null
+          created_at?: string | null
           data_medicao: string
-          ganho_peso_diario?: number | null
           id?: string
-          lote_id: string
-          mortalidade_periodo?: number | null
+          nivel_atividade?: string | null
           observacoes?: string | null
-          peso_medio?: number | null
-          user_id: string
+          peso?: number | null
         }
         Update: {
-          company_id?: string | null
-          consumo_racao_kg?: number | null
-          conversao_alimentar?: number | null
-          created_at?: string
+          animal_id?: string | null
+          condicao_corporal?: number | null
+          created_at?: string | null
           data_medicao?: string
-          ganho_peso_diario?: number | null
           id?: string
-          lote_id?: string
-          mortalidade_periodo?: number | null
+          nivel_atividade?: string | null
           observacoes?: string | null
-          peso_medio?: number | null
-          user_id?: string
+          peso?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "performance_historico_company_id_fkey"
-            columns: ["company_id"]
+            foreignKeyName: "metricas_saude_animal_id_fkey"
+            columns: ["animal_id"]
             isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "performance_historico_lote_id_fkey"
-            columns: ["lote_id"]
-            isOneToOne: false
-            referencedRelation: "lotes"
+            referencedRelation: "animais"
             referencedColumns: ["id"]
           },
         ]
       }
-      profiles: {
+      produtos: {
         Row: {
-          avatar_url: string | null
-          company_id: string | null
-          created_at: string
-          empresa: string | null
+          categoria: Database["public"]["Enums"]["produto_categoria"]
+          composicao: Json | null
+          created_at: string | null
+          descricao: string | null
+          empresa_id: string | null
           id: string
           nome: string
+          preco: number
+          updated_at: string | null
+        }
+        Insert: {
+          categoria: Database["public"]["Enums"]["produto_categoria"]
+          composicao?: Json | null
+          created_at?: string | null
+          descricao?: string | null
+          empresa_id?: string | null
+          id?: string
+          nome: string
+          preco: number
+          updated_at?: string | null
+        }
+        Update: {
+          categoria?: Database["public"]["Enums"]["produto_categoria"]
+          composicao?: Json | null
+          created_at?: string | null
+          descricao?: string | null
+          empresa_id?: string | null
+          id?: string
+          nome?: string
+          preco?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produtos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recomendacoes_nutricionais: {
+        Row: {
+          animal_id: string | null
+          created_at: string | null
+          data_fim: string | null
+          data_inicio: string
+          id: string
+          observacoes: string | null
+          produto_id: string | null
+          quantidade_diaria: number | null
+          veterinario_id: string | null
+        }
+        Insert: {
+          animal_id?: string | null
+          created_at?: string | null
+          data_fim?: string | null
+          data_inicio: string
+          id?: string
+          observacoes?: string | null
+          produto_id?: string | null
+          quantidade_diaria?: number | null
+          veterinario_id?: string | null
+        }
+        Update: {
+          animal_id?: string | null
+          created_at?: string | null
+          data_fim?: string | null
+          data_inicio?: string
+          id?: string
+          observacoes?: string | null
+          produto_id?: string | null
+          quantidade_diaria?: number | null
+          veterinario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recomendacoes_nutricionais_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recomendacoes_nutricionais_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recomendacoes_nutricionais_veterinario_id_fkey"
+            columns: ["veterinario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      usuarios: {
+        Row: {
+          created_at: string | null
+          email: string
+          empresa_id: string | null
+          id: string
+          nome: string
+          role: Database["public"]["Enums"]["user_role"]
+          senha: string
           telefone: string | null
-          updated_at: string
-          user_id: string
+          updated_at: string | null
         }
         Insert: {
-          avatar_url?: string | null
-          company_id?: string | null
-          created_at?: string
-          empresa?: string | null
+          created_at?: string | null
+          email: string
+          empresa_id?: string | null
           id?: string
           nome: string
+          role: Database["public"]["Enums"]["user_role"]
+          senha: string
           telefone?: string | null
-          updated_at?: string
-          user_id: string
+          updated_at?: string | null
         }
         Update: {
-          avatar_url?: string | null
-          company_id?: string | null
-          created_at?: string
-          empresa?: string | null
+          created_at?: string | null
+          email?: string
+          empresa_id?: string | null
           id?: string
           nome?: string
-          telefone?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      propriedades: {
-        Row: {
-          area_hectares: number | null
-          capacidade_animais: number | null
-          company_id: string | null
-          created_at: string
-          endereco: string | null
-          id: string
-          nome: string
-          tipo_criacao: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          area_hectares?: number | null
-          capacidade_animais?: number | null
-          company_id?: string | null
-          created_at?: string
-          endereco?: string | null
-          id?: string
-          nome: string
-          tipo_criacao: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          area_hectares?: number | null
-          capacidade_animais?: number | null
-          company_id?: string | null
-          created_at?: string
-          endereco?: string | null
-          id?: string
-          nome?: string
-          tipo_criacao?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "propriedades_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_roles: {
-        Row: {
-          company_id: string | null
-          created_at: string
-          id: string
-          is_active: boolean | null
-          role: Database["public"]["Enums"]["user_role"]
-          user_id: string
-        }
-        Insert: {
-          company_id?: string | null
-          created_at?: string
-          id?: string
-          is_active?: boolean | null
-          role: Database["public"]["Enums"]["user_role"]
-          user_id: string
-        }
-        Update: {
-          company_id?: string | null
-          created_at?: string
-          id?: string
-          is_active?: boolean | null
           role?: Database["public"]["Enums"]["user_role"]
-          user_id?: string
+          senha?: string
+          telefone?: string | null
+          updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_roles_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      get_user_role: {
-        Args: { user_uuid: string; comp_id: string }
-        Returns: Database["public"]["Enums"]["user_role"]
-      }
       user_has_company_access: {
         Args: { user_uuid: string; comp_id: string }
         Returns: boolean
       }
     }
     Enums: {
-      user_role: "super_admin" | "company_admin" | "veterinario" | "cliente"
+      animal_type: "cao" | "gato" | "cavalo" | "outros"
+      health_status: "saudavel" | "sobrepeso" | "baixo_peso" | "convalescente"
+      produto_categoria: "racao" | "suplemento" | "medicamento" | "acessorio"
+      user_role: "admin" | "veterinario" | "empresa" | "cliente"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -546,21 +337,25 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
@@ -578,14 +373,16 @@ export type Tables<
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
@@ -601,14 +398,16 @@ export type TablesInsert<
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
@@ -624,14 +423,16 @@ export type TablesUpdate<
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
@@ -639,14 +440,16 @@ export type Enums<
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
@@ -654,7 +457,10 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      user_role: ["super_admin", "company_admin", "veterinario", "cliente"],
+      animal_type: ["cao", "gato", "cavalo", "outros"],
+      health_status: ["saudavel", "sobrepeso", "baixo_peso", "convalescente"],
+      produto_categoria: ["racao", "suplemento", "medicamento", "acessorio"],
+      user_role: ["admin", "veterinario", "empresa", "cliente"],
     },
   },
 } as const
