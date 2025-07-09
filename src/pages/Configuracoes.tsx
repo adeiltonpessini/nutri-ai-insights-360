@@ -9,8 +9,8 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
-import { Camera, Save, User, Mail, Phone, Building } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Camera, Save, User, Mail, Phone, Building, Upload } from 'lucide-react';
 
 interface UserProfile {
   nome: string;
@@ -22,8 +22,10 @@ interface UserProfile {
 export default function Configuracoes() {
   const { user } = useAuth();
   const { currentCompany } = useCompany();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [profile, setProfile] = useState<UserProfile>({
     nome: '',
     telefone: '',
@@ -46,9 +48,34 @@ export default function Configuracoes() {
         .eq('user_id', user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Se não existe perfil, criar um
+        if (error.code === 'PGRST116') {
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              user_id: user.id,
+              nome: user.user_metadata?.nome || '',
+              empresa: user.user_metadata?.empresa || '',
+              telefone: null,
+              avatar_url: null
+            });
 
-      if (data) {
+          if (insertError) {
+            console.error('Erro ao criar perfil:', insertError);
+            throw insertError;
+          }
+
+          setProfile({
+            nome: user.user_metadata?.nome || '',
+            telefone: '',
+            avatar_url: '',
+            empresa: user.user_metadata?.empresa || ''
+          });
+        } else {
+          throw error;
+        }
+      } else if (data) {
         setProfile({
           nome: data.nome || '',
           telefone: data.telefone || '',
@@ -65,6 +92,49 @@ export default function Configuracoes() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setUploading(true);
+      
+      if (!event.target.files || event.target.files.length === 0) {
+        return;
+      }
+
+      const file = event.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user?.id}-${Math.random()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      setProfile({ ...profile, avatar_url: data.publicUrl });
+
+      toast({
+        title: "Sucesso",
+        description: "Avatar atualizado com sucesso",
+      });
+    } catch (error) {
+      console.error('Erro ao fazer upload do avatar:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível fazer upload do avatar",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -141,13 +211,30 @@ export default function Configuracoes() {
                     {profile.nome ? getInitials(profile.nome) : 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full p-0"
-                >
-                  <Camera className="w-4 h-4" />
-                </Button>
+                <div className="absolute -bottom-2 -right-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-8 h-8 rounded-full p-0"
+                    disabled={uploading}
+                    asChild
+                  >
+                    <label htmlFor="avatar-upload" className="cursor-pointer">
+                      {uploading ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+                      ) : (
+                        <Camera className="w-4 h-4" />
+                      )}
+                    </label>
+                  </Button>
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                </div>
               </div>
               <div className="flex-1">
                 <h2 className="text-xl font-semibold">
