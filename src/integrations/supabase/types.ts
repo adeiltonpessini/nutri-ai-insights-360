@@ -19,58 +19,79 @@ export type Database = {
           company_id: string
           created_at: string | null
           data_nascimento: string | null
+          escore_corporal: number | null
           especie: Database["public"]["Enums"]["animal_species"]
           fase_produtiva: Database["public"]["Enums"]["production_phase"] | null
           foto_url: string | null
+          geolocalizacao: unknown | null
           id: string
+          linhagem_genetica: string | null
           lote_id: string | null
+          maes_id: string | null
           nome: string
           observacoes: string | null
+          origem: string | null
+          pais_id: string | null
           peso: number | null
           propriedade_id: string | null
           proprietario_id: string | null
           qrcode: string | null
           raca: string | null
+          status_saude: string | null
           updated_at: string | null
         }
         Insert: {
           company_id: string
           created_at?: string | null
           data_nascimento?: string | null
+          escore_corporal?: number | null
           especie: Database["public"]["Enums"]["animal_species"]
           fase_produtiva?:
             | Database["public"]["Enums"]["production_phase"]
             | null
           foto_url?: string | null
+          geolocalizacao?: unknown | null
           id?: string
+          linhagem_genetica?: string | null
           lote_id?: string | null
+          maes_id?: string | null
           nome: string
           observacoes?: string | null
+          origem?: string | null
+          pais_id?: string | null
           peso?: number | null
           propriedade_id?: string | null
           proprietario_id?: string | null
           qrcode?: string | null
           raca?: string | null
+          status_saude?: string | null
           updated_at?: string | null
         }
         Update: {
           company_id?: string
           created_at?: string | null
           data_nascimento?: string | null
+          escore_corporal?: number | null
           especie?: Database["public"]["Enums"]["animal_species"]
           fase_produtiva?:
             | Database["public"]["Enums"]["production_phase"]
             | null
           foto_url?: string | null
+          geolocalizacao?: unknown | null
           id?: string
+          linhagem_genetica?: string | null
           lote_id?: string | null
+          maes_id?: string | null
           nome?: string
           observacoes?: string | null
+          origem?: string | null
+          pais_id?: string | null
           peso?: number | null
           propriedade_id?: string | null
           proprietario_id?: string | null
           qrcode?: string | null
           raca?: string | null
+          status_saude?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -86,6 +107,20 @@ export type Database = {
             columns: ["lote_id"]
             isOneToOne: false
             referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "animais_maes_id_fkey"
+            columns: ["maes_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "animais_pais_id_fkey"
+            columns: ["pais_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
             referencedColumns: ["id"]
           },
           {
@@ -108,6 +143,195 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "propriedades"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      animal_anexos: {
+        Row: {
+          animal_id: string
+          company_id: string
+          created_at: string
+          id: string
+          nome_arquivo: string
+          tamanho_bytes: number | null
+          tipo: string
+          tipo_mime: string | null
+          uploaded_by: string | null
+          url_arquivo: string
+        }
+        Insert: {
+          animal_id: string
+          company_id: string
+          created_at?: string
+          id?: string
+          nome_arquivo: string
+          tamanho_bytes?: number | null
+          tipo: string
+          tipo_mime?: string | null
+          uploaded_by?: string | null
+          url_arquivo: string
+        }
+        Update: {
+          animal_id?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          nome_arquivo?: string
+          tamanho_bytes?: number | null
+          tipo?: string
+          tipo_mime?: string | null
+          uploaded_by?: string | null
+          url_arquivo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "animal_anexos_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "animal_anexos_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "animal_anexos_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      audit_log: {
+        Row: {
+          acao: string
+          company_id: string
+          dados_anteriores: Json | null
+          dados_novos: Json | null
+          id: string
+          registro_id: string
+          tabela: string
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          acao: string
+          company_id: string
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
+          id?: string
+          registro_id: string
+          tabela: string
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          acao?: string
+          company_id?: string
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
+          id?: string
+          registro_id?: string
+          tabela?: string
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      calendario_veterinario: {
+        Row: {
+          animal_id: string | null
+          company_id: string
+          created_at: string
+          data_agendada: string
+          data_realizada: string | null
+          descricao: string | null
+          id: string
+          lote_id: string | null
+          observacoes: string | null
+          status: string | null
+          tipo_evento: string
+          titulo: string
+          veterinario_responsavel: string | null
+        }
+        Insert: {
+          animal_id?: string | null
+          company_id: string
+          created_at?: string
+          data_agendada: string
+          data_realizada?: string | null
+          descricao?: string | null
+          id?: string
+          lote_id?: string | null
+          observacoes?: string | null
+          status?: string | null
+          tipo_evento: string
+          titulo: string
+          veterinario_responsavel?: string | null
+        }
+        Update: {
+          animal_id?: string | null
+          company_id?: string
+          created_at?: string
+          data_agendada?: string
+          data_realizada?: string | null
+          descricao?: string | null
+          id?: string
+          lote_id?: string | null
+          observacoes?: string | null
+          status?: string | null
+          tipo_evento?: string
+          titulo?: string
+          veterinario_responsavel?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendario_veterinario_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendario_veterinario_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendario_veterinario_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendario_veterinario_veterinario_responsavel_fkey"
+            columns: ["veterinario_responsavel"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -337,6 +561,68 @@ export type Database = {
           },
         ]
       }
+      comparacao_receitas: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          nome_comparacao: string
+          receita_a_id: string | null
+          receita_b_id: string | null
+          resultado_analise: Json | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome_comparacao: string
+          receita_a_id?: string | null
+          receita_b_id?: string | null
+          resultado_analise?: Json | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome_comparacao?: string
+          receita_a_id?: string | null
+          receita_b_id?: string | null
+          resultado_analise?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comparacao_receitas_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comparacao_receitas_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "comparacao_receitas_receita_a_id_fkey"
+            columns: ["receita_a_id"]
+            isOneToOne: false
+            referencedRelation: "receitas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comparacao_receitas_receita_b_id_fkey"
+            columns: ["receita_b_id"]
+            isOneToOne: false
+            referencedRelation: "receitas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       diagnosticos: {
         Row: {
           animal_id: string | null
@@ -407,6 +693,71 @@ export type Database = {
           },
         ]
       }
+      estoque_insumos: {
+        Row: {
+          ativo: boolean | null
+          categoria: string
+          codigo_produto: string | null
+          company_id: string
+          created_at: string
+          data_validade: string | null
+          fornecedor: string | null
+          id: string
+          localizacao: string | null
+          lote_fornecedor: string | null
+          marca: string | null
+          nome: string
+          preco_unitario: number | null
+          quantidade_atual: number | null
+          quantidade_minima: number | null
+          unidade_medida: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          categoria: string
+          codigo_produto?: string | null
+          company_id: string
+          created_at?: string
+          data_validade?: string | null
+          fornecedor?: string | null
+          id?: string
+          localizacao?: string | null
+          lote_fornecedor?: string | null
+          marca?: string | null
+          nome: string
+          preco_unitario?: number | null
+          quantidade_atual?: number | null
+          quantidade_minima?: number | null
+          unidade_medida: string
+        }
+        Update: {
+          ativo?: boolean | null
+          categoria?: string
+          codigo_produto?: string | null
+          company_id?: string
+          created_at?: string
+          data_validade?: string | null
+          fornecedor?: string | null
+          id?: string
+          localizacao?: string | null
+          lote_fornecedor?: string | null
+          marca?: string | null
+          nome?: string
+          preco_unitario?: number | null
+          quantidade_atual?: number | null
+          quantidade_minima?: number | null
+          unidade_medida?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_insumos_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       formulacoes: {
         Row: {
           company_id: string | null
@@ -460,6 +811,117 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      funcionarios: {
+        Row: {
+          ativo: boolean | null
+          cargo: string
+          company_id: string
+          created_at: string
+          data_admissao: string | null
+          data_demissao: string | null
+          email: string | null
+          id: string
+          nome: string
+          salario: number | null
+          telefone: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          cargo: string
+          company_id: string
+          created_at?: string
+          data_admissao?: string | null
+          data_demissao?: string | null
+          email?: string | null
+          id?: string
+          nome: string
+          salario?: number | null
+          telefone?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          cargo?: string
+          company_id?: string
+          created_at?: string
+          data_admissao?: string | null
+          data_demissao?: string | null
+          email?: string | null
+          id?: string
+          nome?: string
+          salario?: number | null
+          telefone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funcionarios_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      historico_saude: {
+        Row: {
+          animal_id: string
+          company_id: string
+          created_at: string
+          data_aplicacao: string
+          descricao: string
+          id: string
+          observacoes: string | null
+          tipo: string
+          updated_at: string
+          veterinario_responsavel: string | null
+        }
+        Insert: {
+          animal_id: string
+          company_id: string
+          created_at?: string
+          data_aplicacao: string
+          descricao: string
+          id?: string
+          observacoes?: string | null
+          tipo: string
+          updated_at?: string
+          veterinario_responsavel?: string | null
+        }
+        Update: {
+          animal_id?: string
+          company_id?: string
+          created_at?: string
+          data_aplicacao?: string
+          descricao?: string
+          id?: string
+          observacoes?: string | null
+          tipo?: string
+          updated_at?: string
+          veterinario_responsavel?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historico_saude_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "historico_saude_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "historico_saude_veterinario_responsavel_fkey"
+            columns: ["veterinario_responsavel"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -599,6 +1061,154 @@ export type Database = {
           },
         ]
       }
+      movimentacoes_estoque: {
+        Row: {
+          company_id: string
+          created_at: string
+          data_movimentacao: string
+          documento: string | null
+          id: string
+          insumo_id: string
+          motivo: string
+          observacoes: string | null
+          quantidade: number
+          responsavel_id: string | null
+          tipo_movimentacao: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          data_movimentacao: string
+          documento?: string | null
+          id?: string
+          insumo_id: string
+          motivo: string
+          observacoes?: string | null
+          quantidade: number
+          responsavel_id?: string | null
+          tipo_movimentacao: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          data_movimentacao?: string
+          documento?: string | null
+          id?: string
+          insumo_id?: string
+          motivo?: string
+          observacoes?: string | null
+          quantidade?: number
+          responsavel_id?: string | null
+          tipo_movimentacao?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_estoque_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_estoque_insumo_id_fkey"
+            columns: ["insumo_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_insumos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_estoque_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      movimentacoes_financeiras: {
+        Row: {
+          animal_id: string | null
+          company_id: string
+          conta_id: string
+          created_at: string
+          created_by: string | null
+          data_movimentacao: string
+          descricao: string
+          documento: string | null
+          id: string
+          lote_id: string | null
+          observacoes: string | null
+          tipo: string
+          valor: number
+        }
+        Insert: {
+          animal_id?: string | null
+          company_id: string
+          conta_id: string
+          created_at?: string
+          created_by?: string | null
+          data_movimentacao: string
+          descricao: string
+          documento?: string | null
+          id?: string
+          lote_id?: string | null
+          observacoes?: string | null
+          tipo: string
+          valor: number
+        }
+        Update: {
+          animal_id?: string | null
+          company_id?: string
+          conta_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_movimentacao?: string
+          descricao?: string
+          documento?: string | null
+          id?: string
+          lote_id?: string | null
+          observacoes?: string | null
+          tipo?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_financeiras_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_financeiras_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_financeiras_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_financeiras_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_financeiras_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       performance_historico: {
         Row: {
           company_id: string | null
@@ -655,6 +1265,57 @@ export type Database = {
             columns: ["lote_id"]
             isOneToOne: false
             referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plano_contas: {
+        Row: {
+          ativo: boolean | null
+          categoria: string
+          codigo: string
+          company_id: string
+          conta_pai_id: string | null
+          created_at: string
+          id: string
+          nome: string
+          tipo: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          categoria: string
+          codigo: string
+          company_id: string
+          conta_pai_id?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          tipo: string
+        }
+        Update: {
+          ativo?: boolean | null
+          categoria?: string
+          codigo?: string
+          company_id?: string
+          conta_pai_id?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plano_contas_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plano_contas_conta_pai_id_fkey"
+            columns: ["conta_pai_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas"
             referencedColumns: ["id"]
           },
         ]
@@ -928,39 +1589,48 @@ export type Database = {
         Row: {
           animal_id: string | null
           company_id: string
+          consumo_agua_litros: number | null
           created_at: string | null
           eficiencia_energetica: number | null
+          emissao_metano: number | null
           fcr: number | null
           id: string
           pegada_carbono: number | null
           periodo_fim: string
           periodo_inicio: string
+          pontuacao_esg: number | null
           residuos_gerados: number | null
           uso_agua: number | null
         }
         Insert: {
           animal_id?: string | null
           company_id: string
+          consumo_agua_litros?: number | null
           created_at?: string | null
           eficiencia_energetica?: number | null
+          emissao_metano?: number | null
           fcr?: number | null
           id?: string
           pegada_carbono?: number | null
           periodo_fim: string
           periodo_inicio: string
+          pontuacao_esg?: number | null
           residuos_gerados?: number | null
           uso_agua?: number | null
         }
         Update: {
           animal_id?: string | null
           company_id?: string
+          consumo_agua_litros?: number | null
           created_at?: string | null
           eficiencia_energetica?: number | null
+          emissao_metano?: number | null
           fcr?: number | null
           id?: string
           pegada_carbono?: number | null
           periodo_fim?: string
           periodo_inicio?: string
+          pontuacao_esg?: number | null
           residuos_gerados?: number | null
           uso_agua?: number | null
         }
@@ -978,6 +1648,82 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarefas_diarias: {
+        Row: {
+          company_id: string
+          created_at: string
+          data_concluida: string | null
+          data_prevista: string
+          descricao: string | null
+          executado_por: string | null
+          id: string
+          observacoes: string | null
+          prioridade: string | null
+          responsavel_id: string | null
+          status: string | null
+          tempo_estimado: number | null
+          tempo_real: number | null
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          data_concluida?: string | null
+          data_prevista: string
+          descricao?: string | null
+          executado_por?: string | null
+          id?: string
+          observacoes?: string | null
+          prioridade?: string | null
+          responsavel_id?: string | null
+          status?: string | null
+          tempo_estimado?: number | null
+          tempo_real?: number | null
+          tipo: string
+          titulo: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          data_concluida?: string | null
+          data_prevista?: string
+          descricao?: string | null
+          executado_por?: string | null
+          id?: string
+          observacoes?: string | null
+          prioridade?: string | null
+          responsavel_id?: string | null
+          status?: string | null
+          tempo_estimado?: number | null
+          tempo_real?: number | null
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_diarias_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_diarias_executado_por_fkey"
+            columns: ["executado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "tarefas_diarias_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
