@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -85,8 +84,8 @@ export default function AcceptInvitation() {
 
       if (error) throw error;
 
-      // Type assertion to properly handle the JSON response
-      const response = data as InvitationResponse;
+      // Safe type conversion using unknown first
+      const response = (data as unknown) as InvitationResponse;
 
       if (response.success) {
         toast({
