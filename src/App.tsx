@@ -3,7 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CompanyProvider } from './contexts/CompanyContext';
-import { LandingPage } from './components/LandingPage';
+import LandingPage from './components/LandingPage';
 import Auth from './pages/Auth';
 import Pricing from './pages/Pricing';
 import AcceptInvitation from './pages/AcceptInvitation';
