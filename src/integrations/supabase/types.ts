@@ -23,9 +23,11 @@ export type Database = {
           fase_produtiva: Database["public"]["Enums"]["production_phase"] | null
           foto_url: string | null
           id: string
+          lote_id: string | null
           nome: string
           observacoes: string | null
           peso: number | null
+          propriedade_id: string | null
           proprietario_id: string | null
           qrcode: string | null
           raca: string | null
@@ -41,9 +43,11 @@ export type Database = {
             | null
           foto_url?: string | null
           id?: string
+          lote_id?: string | null
           nome: string
           observacoes?: string | null
           peso?: number | null
+          propriedade_id?: string | null
           proprietario_id?: string | null
           qrcode?: string | null
           raca?: string | null
@@ -59,9 +63,11 @@ export type Database = {
             | null
           foto_url?: string | null
           id?: string
+          lote_id?: string | null
           nome?: string
           observacoes?: string | null
           peso?: number | null
+          propriedade_id?: string | null
           proprietario_id?: string | null
           qrcode?: string | null
           raca?: string | null
@@ -76,17 +82,104 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "animais_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "animais_proprietario_id_fkey"
             columns: ["proprietario_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "fk_lote"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_propriedade"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_products: {
+        Row: {
+          ativo: boolean | null
+          beneficios: string[] | null
+          categoria: string | null
+          company_id: string
+          composicao: Json | null
+          created_at: string | null
+          especie_alvo: Database["public"]["Enums"]["animal_species"][] | null
+          fase_alvo: Database["public"]["Enums"]["production_phase"][] | null
+          id: string
+          imagem_url: string | null
+          linha: string | null
+          nome: string
+          objetivo: string | null
+          preco_por_kg: number | null
+          restricoes: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          beneficios?: string[] | null
+          categoria?: string | null
+          company_id: string
+          composicao?: Json | null
+          created_at?: string | null
+          especie_alvo?: Database["public"]["Enums"]["animal_species"][] | null
+          fase_alvo?: Database["public"]["Enums"]["production_phase"][] | null
+          id?: string
+          imagem_url?: string | null
+          linha?: string | null
+          nome: string
+          objetivo?: string | null
+          preco_por_kg?: number | null
+          restricoes?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          beneficios?: string[] | null
+          categoria?: string | null
+          company_id?: string
+          composicao?: Json | null
+          created_at?: string | null
+          especie_alvo?: Database["public"]["Enums"]["animal_species"][] | null
+          fase_alvo?: Database["public"]["Enums"]["production_phase"][] | null
+          id?: string
+          imagem_url?: string | null
+          linha?: string | null
+          nome?: string
+          objetivo?: string | null
+          preco_por_kg?: number | null
+          restricoes?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produtos_anutri_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
         ]
       }
       companies: {
         Row: {
           address: string | null
+          company_type: Database["public"]["Enums"]["company_type"] | null
           created_at: string
           description: string | null
           email: string | null
@@ -94,6 +187,7 @@ export type Database = {
           is_active: boolean | null
           logo_url: string | null
           max_animals: number | null
+          max_products: number | null
           max_users: number | null
           name: string
           phone: string | null
@@ -107,6 +201,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          company_type?: Database["public"]["Enums"]["company_type"] | null
           created_at?: string
           description?: string | null
           email?: string | null
@@ -114,6 +209,7 @@ export type Database = {
           is_active?: boolean | null
           logo_url?: string | null
           max_animals?: number | null
+          max_products?: number | null
           max_users?: number | null
           name: string
           phone?: string | null
@@ -127,6 +223,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          company_type?: Database["public"]["Enums"]["company_type"] | null
           created_at?: string
           description?: string | null
           email?: string | null
@@ -134,6 +231,7 @@ export type Database = {
           is_active?: boolean | null
           logo_url?: string | null
           max_animals?: number | null
+          max_products?: number | null
           max_users?: number | null
           name?: string
           phone?: string | null
@@ -164,6 +262,7 @@ export type Database = {
           min_order_quantity: number | null
           name: string
           price: number | null
+          product_type: Database["public"]["Enums"]["product_type"] | null
           specifications: Json | null
           stock_quantity: number | null
           storage_instructions: string | null
@@ -190,6 +289,7 @@ export type Database = {
           min_order_quantity?: number | null
           name: string
           price?: number | null
+          product_type?: Database["public"]["Enums"]["product_type"] | null
           specifications?: Json | null
           stock_quantity?: number | null
           storage_instructions?: string | null
@@ -216,6 +316,7 @@ export type Database = {
           min_order_quantity?: number | null
           name?: string
           price?: number | null
+          product_type?: Database["public"]["Enums"]["product_type"] | null
           specifications?: Json | null
           stock_quantity?: number | null
           storage_instructions?: string | null
@@ -238,6 +339,7 @@ export type Database = {
       }
       diagnosticos: {
         Row: {
+          animal_id: string | null
           company_id: string | null
           confianca_ia: number | null
           created_at: string
@@ -252,6 +354,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          animal_id?: string | null
           company_id?: string | null
           confianca_ia?: number | null
           created_at?: string
@@ -266,6 +369,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          animal_id?: string | null
           company_id?: string | null
           confianca_ia?: number | null
           created_at?: string
@@ -280,6 +384,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "diagnosticos_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "diagnosticos_company_id_fkey"
             columns: ["company_id"]
@@ -548,71 +659,6 @@ export type Database = {
           },
         ]
       }
-      produtos_anutri: {
-        Row: {
-          ativo: boolean | null
-          beneficios: string[] | null
-          categoria: string | null
-          company_id: string
-          composicao: Json | null
-          created_at: string | null
-          especie_alvo: Database["public"]["Enums"]["animal_species"][] | null
-          fase_alvo: Database["public"]["Enums"]["production_phase"][] | null
-          id: string
-          imagem_url: string | null
-          linha: string | null
-          nome: string
-          objetivo: string | null
-          preco_por_kg: number | null
-          restricoes: string[] | null
-          updated_at: string | null
-        }
-        Insert: {
-          ativo?: boolean | null
-          beneficios?: string[] | null
-          categoria?: string | null
-          company_id: string
-          composicao?: Json | null
-          created_at?: string | null
-          especie_alvo?: Database["public"]["Enums"]["animal_species"][] | null
-          fase_alvo?: Database["public"]["Enums"]["production_phase"][] | null
-          id?: string
-          imagem_url?: string | null
-          linha?: string | null
-          nome: string
-          objetivo?: string | null
-          preco_por_kg?: number | null
-          restricoes?: string[] | null
-          updated_at?: string | null
-        }
-        Update: {
-          ativo?: boolean | null
-          beneficios?: string[] | null
-          categoria?: string | null
-          company_id?: string
-          composicao?: Json | null
-          created_at?: string | null
-          especie_alvo?: Database["public"]["Enums"]["animal_species"][] | null
-          fase_alvo?: Database["public"]["Enums"]["production_phase"][] | null
-          id?: string
-          imagem_url?: string | null
-          linha?: string | null
-          nome?: string
-          objetivo?: string | null
-          preco_por_kg?: number | null
-          restricoes?: string[] | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "produtos_anutri_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -772,7 +818,7 @@ export type Database = {
             foreignKeyName: "receitas_produto_sugerido_id_fkey"
             columns: ["produto_sugerido_id"]
             isOneToOne: false
-            referencedRelation: "produtos_anutri"
+            referencedRelation: "catalog_products"
             referencedColumns: ["id"]
           },
           {
@@ -941,6 +987,13 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
     }
@@ -966,6 +1019,12 @@ export type Database = {
         | "ovino"
         | "equino"
         | "outros"
+      company_type:
+        | "veterinario"
+        | "empresa_alimento"
+        | "empresa_medicamento"
+        | "geral"
+      product_type: "alimento" | "medicamento" | "geral"
       production_phase:
         | "cria"
         | "recria"
@@ -1116,6 +1175,13 @@ export const Constants = {
         "equino",
         "outros",
       ],
+      company_type: [
+        "veterinario",
+        "empresa_alimento",
+        "empresa_medicamento",
+        "geral",
+      ],
+      product_type: ["alimento", "medicamento", "geral"],
       production_phase: [
         "cria",
         "recria",

@@ -1,12 +1,18 @@
+
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { NotificationToast } from "@/components/ui/notification-toast";
 import { CompanySelector } from "@/components/CompanySelector";
+import { Button } from "@/components/ui/button";
 import { useCompany } from "@/contexts/CompanyContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export function Layout() {
   const { currentCompany, isLoading } = useCompany();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -25,19 +31,22 @@ export function Layout() {
             <div className="flex items-center gap-4">
               <SidebarTrigger />
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-sm">N</span>
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">VS</span>
                 </div>
-                <h1 className="font-bold text-xl bg-gradient-primary bg-clip-text text-transparent">
-                  NutriScan360
+                <h1 className="font-bold text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  VetSaaS Pro
                 </h1>
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <Button variant="outline" onClick={() => navigate("/pricing")}>
+                Planos
+              </Button>
               <CompanySelector />
               <NotificationToast />
               <div className="text-sm text-muted-foreground">
-                Bem-vindo, <span className="font-medium text-foreground">Dr. João Silva</span>
+                Bem-vindo, <span className="font-medium text-foreground">{user?.email}</span>
               </div>
             </div>
           </header>
