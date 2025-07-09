@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,15 +75,18 @@ export default function Pricing() {
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/50">
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" onClick={() => navigate(-1)}>
+          <Button variant="ghost" onClick={() => navigate(-1)} className="transition-smooth">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
         </div>
 
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Escolha seu Plano
+          <div className="mx-auto w-16 h-16 bg-gradient-to-r from-primary to-tech-blue rounded-2xl flex items-center justify-center mb-6 shadow-glow">
+            <Shield className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-tech-blue bg-clip-text text-transparent">
+            VetSaaS Pro - Planos
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Transforme sua gestão veterinária com as melhores ferramentas do mercado
@@ -95,7 +99,7 @@ export default function Pricing() {
               <TabsTrigger value="month">Mensal</TabsTrigger>
               <TabsTrigger value="year" className="relative">
                 Anual
-                <Badge className="ml-2 bg-green-500 text-white text-xs">-20%</Badge>
+                <Badge className="ml-2 bg-success text-white text-xs">-20%</Badge>
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -108,33 +112,33 @@ export default function Pricing() {
         />
 
         <div className="mt-16 grid grid-cols-1 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-          <Card className="text-center">
+          <Card className="text-center border border-border/50 shadow-soft hover:shadow-medium transition-smooth">
             <CardContent className="pt-6">
-              <Shield className="w-8 h-8 mx-auto mb-4 text-blue-500" />
+              <Shield className="w-8 h-8 mx-auto mb-4 text-tech-blue" />
               <h3 className="font-semibold mb-2">Segurança Total</h3>
               <p className="text-sm text-muted-foreground">Dados protegidos com criptografia</p>
             </CardContent>
           </Card>
           
-          <Card className="text-center">
+          <Card className="text-center border border-border/50 shadow-soft hover:shadow-medium transition-smooth">
             <CardContent className="pt-6">
-              <Zap className="w-8 h-8 mx-auto mb-4 text-yellow-500" />
+              <Zap className="w-8 h-8 mx-auto mb-4 text-warning" />
               <h3 className="font-semibold mb-2">IA Avançada</h3>
               <p className="text-sm text-muted-foreground">Diagnósticos inteligentes</p>
             </CardContent>
           </Card>
           
-          <Card className="text-center">
+          <Card className="text-center border border-border/50 shadow-soft hover:shadow-medium transition-smooth">
             <CardContent className="pt-6">
-              <Users className="w-8 h-8 mx-auto mb-4 text-green-500" />
+              <Users className="w-8 h-8 mx-auto mb-4 text-sustainability" />
               <h3 className="font-semibold mb-2">Equipe Completa</h3>
               <p className="text-sm text-muted-foreground">Gerencie toda sua equipe</p>
             </CardContent>
           </Card>
           
-          <Card className="text-center">
+          <Card className="text-center border border-border/50 shadow-soft hover:shadow-medium transition-smooth">
             <CardContent className="pt-6">
-              <CreditCard className="w-8 h-8 mx-auto mb-4 text-purple-500" />
+              <CreditCard className="w-8 h-8 mx-auto mb-4 text-primary" />
               <h3 className="font-semibold mb-2">Sem Taxas Ocultas</h3>
               <p className="text-sm text-muted-foreground">Preço transparente</p>
             </CardContent>
@@ -143,7 +147,7 @@ export default function Pricing() {
 
         <div className="text-center mt-12">
           <p className="text-muted-foreground">
-            Tem dúvidas? <Button variant="link" className="p-0">Entre em contato</Button>
+            Tem dúvidas? <Button variant="link" className="p-0 transition-smooth">Entre em contato</Button>
           </p>
         </div>
       </div>
