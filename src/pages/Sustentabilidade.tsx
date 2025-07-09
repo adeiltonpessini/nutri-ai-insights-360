@@ -21,7 +21,8 @@ import {
   Award,
   BarChart3,
   Calculator,
-  Calendar
+  Calendar,
+  CheckCircle
 } from "lucide-react";
 import { useCompany } from "@/contexts/CompanyContext";
 import { useAuth } from "@/contexts/AuthContext";

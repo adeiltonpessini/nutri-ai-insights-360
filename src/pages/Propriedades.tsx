@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   MapPin, 
-  Barn,
+  Building2,
   Users,
   TrendingUp,
   Plus,
@@ -294,7 +293,7 @@ export default function Propriedades() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Lotes Ativos</CardTitle>
-              <Barn className="h-4 w-4 text-muted-foreground" />
+              <Building2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.lotesAtivos}</div>
@@ -427,7 +426,7 @@ export default function Propriedades() {
               {lotes.length === 0 ? (
                 <Card>
                   <CardContent className="p-6 text-center">
-                    <Barn className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-semibold mb-2">Nenhum lote cadastrado</h3>
                     <p className="text-muted-foreground mb-4">
                       Crie lotes para organizar seus animais por grupos.
