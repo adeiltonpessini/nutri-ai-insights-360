@@ -1,202 +1,164 @@
 
-import { Check, Star, Zap, Building2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/contexts/AuthContext";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Check, Star, ArrowLeft, CreditCard, Shield, Zap, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-const plans = [
-  {
-    id: "veterinario_basic",
-    name: "Veterinário Básico",
-    description: "Para veterinários iniciantes",
-    price: "R$ 99",
-    period: "/mês",
-    maxAnimals: 100,
-    maxClients: 20,
-    features: [
-      "Até 100 animais cadastrados",
-      "Até 20 clientes",
-      "Diagnóstico com IA",
-      "Receitas digitais",
-      "Histórico médico completo",
-      "Suporte por email"
-    ],
-    popular: false,
-    icon: Zap,
-    color: "blue"
-  },
-  {
-    id: "veterinario_pro",
-    name: "Veterinário Profissional",
-    description: "Para clínicas veterinárias",
-    price: "R$ 299",
-    period: "/mês",
-    maxAnimals: 500,
-    maxClients: 100,
-    features: [
-      "Até 500 animais cadastrados",
-      "Até 100 clientes",
-      "Diagnóstico avançado com IA",
-      "Receitas digitais ilimitadas",
-      "Relatórios detalhados",
-      "Gestão de lotes",
-      "Análise de performance",
-      "Suporte prioritário"
-    ],
-    popular: true,
-    icon: Star,
-    color: "green"
-  },
-  {
-    id: "veterinario_enterprise",
-    name: "Veterinário Enterprise",
-    description: "Para grandes clínicas e hospitais",
-    price: "R$ 799",
-    period: "/mês",
-    maxAnimals: 2000,
-    maxClients: 500,
-    features: [
-      "Até 2000 animais cadastrados",
-      "Até 500 clientes",
-      "Diagnóstico com IA premium",
-      "Multi-usuários",
-      "API personalizada",
-      "Integrações avançadas",
-      "Dashboard executivo",
-      "Suporte 24/7"
-    ],
-    popular: false,
-    icon: Building2,
-    color: "purple"
-  },
-  {
-    id: "empresa_medicamentos",
-    name: "Empresa de Medicamentos",
-    description: "Para fabricantes de medicamentos veterinários",
-    price: "R$ 499",
-    period: "/mês",
-    maxProducts: 200,
-    features: [
-      "Até 200 produtos cadastrados",
-      "Catálogo digital completo",
-      "Análise de mercado",
-      "Relatórios de vendas",
-      "Integração com veterinários",
-      "Dashboard de performance",
-      "Suporte especializado"
-    ],
-    popular: false,
-    icon: Building2,
-    color: "red"
-  },
-  {
-    id: "empresa_alimentos",
-    name: "Empresa de Alimentos",
-    description: "Para fabricantes de alimentos para animais",
-    price: "R$ 599",
-    period: "/mês",
-    maxProducts: 300,
-    features: [
-      "Até 300 produtos cadastrados",
-      "Simulador de ração",
-      "Análise nutricional",
-      "Relatórios de sustentabilidade",
-      "Integração com veterinários",
-      "Dashboard avançado",
-      "Suporte especializado"
-    ],
-    popular: false,
-    icon: Building2,
-    color: "orange"
-  }
-];
+import { useAuth } from "@/contexts/AuthContext";
+import { SubscriptionPlans } from "@/components/SubscriptionPlans";
+import { SUBSCRIPTION_PLANS, SubscriptionPlan } from "@/types/subscription";
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Pricing() {
-  const { user } = useAuth();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [currentPlan, setCurrentPlan] = useState<string>();
+  const [loading, setLoading] = useState(false);
+  const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month');
 
-  const handleSelectPlan = (planId: string) => {
+  useEffect(() => {
+    if (user) {
+      loadCurrentSubscription();
+    }
+  }, [user]);
+
+  const loadCurrentSubscription = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_subscriptions')
+        .select('plan_id')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .single();
+
+      if (data) {
+        setCurrentPlan(data.plan_id);
+      }
+    } catch (error) {
+      console.log('No active subscription found');
+    }
+  };
+
+  const handleSelectPlan = async (plan: SubscriptionPlan) => {
     if (!user) {
-      navigate("/auth");
+      navigate('/auth');
       return;
     }
-    // Aqui você implementaria a lógica de checkout/pagamento
-    console.log(`Selecionado plano: ${planId}`);
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { 
+          planId: plan.id,
+          priceId: plan.stripePriceId,
+          interval: billingInterval
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+
+      toast({
+        title: "Redirecionando para checkout",
+        description: "Você será redirecionado para o Stripe para completar o pagamento."
+      });
+    } catch (error) {
+      console.error('Error creating checkout:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao processar pagamento. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const filteredPlans = SUBSCRIPTION_PLANS.filter(plan => plan.interval === billingInterval);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/50">
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold mb-4">
-            Escolha o melhor plano para seu negócio
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Planos flexíveis para veterinários, empresas de medicamentos e alimentos. 
-            Comece gratuitamente e escale conforme cresce.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-          {plans.map((plan) => {
-            const IconComponent = plan.icon;
-            return (
-              <Card 
-                key={plan.id} 
-                className={`relative ${plan.popular ? 'ring-2 ring-primary shadow-lg scale-105' : ''}`}
-              >
-                {plan.popular && (
-                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary">
-                    Mais Popular
-                  </Badge>
-                )}
-                
-                <CardHeader className="text-center pb-6">
-                  <div className={`w-12 h-12 mx-auto mb-4 rounded-lg bg-${plan.color}-100 flex items-center justify-center`}>
-                    <IconComponent className={`w-6 h-6 text-${plan.color}-600`} />
-                  </div>
-                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                  <CardDescription className="text-base">{plan.description}</CardDescription>
-                  <div className="mt-4">
-                    <span className="text-4xl font-bold">{plan.price}</span>
-                    <span className="text-muted-foreground">{plan.period}</span>
-                  </div>
-                </CardHeader>
-
-                <CardContent>
-                  <ul className="space-y-3">
-                    {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-center">
-                        <Check className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-
-                <CardFooter>
-                  <Button 
-                    onClick={() => handleSelectPlan(plan.id)}
-                    className="w-full"
-                    variant={plan.popular ? "default" : "outline"}
-                  >
-                    Escolher Plano
-                  </Button>
-                </CardFooter>
-              </Card>
-            );
-          })}
-        </div>
-
-        <div className="text-center mt-16">
-          <p className="text-muted-foreground mb-4">
-            Precisa de um plano personalizado?
-          </p>
-          <Button variant="outline" size="lg">
-            Falar com Especialista
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center gap-4 mb-8">
+          <Button variant="ghost" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar
           </Button>
+        </div>
+
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Escolha seu Plano
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Transforme sua gestão veterinária com as melhores ferramentas do mercado
+          </p>
+        </div>
+
+        <div className="flex justify-center mb-8">
+          <Tabs value={billingInterval} onValueChange={(value) => setBillingInterval(value as 'month' | 'year')}>
+            <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
+              <TabsTrigger value="month">Mensal</TabsTrigger>
+              <TabsTrigger value="year" className="relative">
+                Anual
+                <Badge className="ml-2 bg-green-500 text-white text-xs">-20%</Badge>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
+        <SubscriptionPlans 
+          currentPlan={currentPlan}
+          onSelectPlan={handleSelectPlan}
+          loading={loading}
+        />
+
+        <div className="mt-16 grid grid-cols-1 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+          <Card className="text-center">
+            <CardContent className="pt-6">
+              <Shield className="w-8 h-8 mx-auto mb-4 text-blue-500" />
+              <h3 className="font-semibold mb-2">Segurança Total</h3>
+              <p className="text-sm text-muted-foreground">Dados protegidos com criptografia</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="text-center">
+            <CardContent className="pt-6">
+              <Zap className="w-8 h-8 mx-auto mb-4 text-yellow-500" />
+              <h3 className="font-semibold mb-2">IA Avançada</h3>
+              <p className="text-sm text-muted-foreground">Diagnósticos inteligentes</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="text-center">
+            <CardContent className="pt-6">
+              <Users className="w-8 h-8 mx-auto mb-4 text-green-500" />
+              <h3 className="font-semibold mb-2">Equipe Completa</h3>
+              <p className="text-sm text-muted-foreground">Gerencie toda sua equipe</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="text-center">
+            <CardContent className="pt-6">
+              <CreditCard className="w-8 h-8 mx-auto mb-4 text-purple-500" />
+              <h3 className="font-semibold mb-2">Sem Taxas Ocultas</h3>
+              <p className="text-sm text-muted-foreground">Preço transparente</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="text-center mt-12">
+          <p className="text-muted-foreground">
+            Tem dúvidas? <Button variant="link" className="p-0">Entre em contato</Button>
+          </p>
         </div>
       </div>
     </div>

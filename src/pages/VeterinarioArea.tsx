@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,12 +24,15 @@ import {
   AlertTriangle,
   CheckCircle,
   FileText,
-  Eye
+  Eye,
+  QrCode,
+  Camera
 } from "lucide-react";
 import { useCompany } from "@/contexts/CompanyContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { ProfileCard } from "@/components/ProfileCard";
 
 export default function VeterinarioArea() {
   const { currentCompany } = useCompany();
@@ -293,9 +295,9 @@ export default function VeterinarioArea() {
               </div>
             </div>
 
-            <div className="grid gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {animals.length === 0 ? (
-                <Card>
+                <Card className="col-span-full">
                   <CardContent className="p-6 text-center">
                     <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-semibold mb-2">Nenhum animal cadastrado</h3>
@@ -306,78 +308,14 @@ export default function VeterinarioArea() {
                 </Card>
               ) : (
                 animals.map((animal) => (
-                  <Card key={animal.id}>
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-semibold text-lg">{animal.nome}</h3>
-                          <div className="space-y-1 text-sm text-muted-foreground">
-                            <p>Espécie: {animal.especie}</p>
-                            <p>Raça: {animal.raca || 'Não informado'}</p>
-                            <p>Peso: {animal.peso ? `${animal.peso} kg` : 'Não informado'}</p>
-                            <p>Lote: {animal.lotes?.nome || 'Não vinculado'}</p>
-                            <p>Propriedade: {animal.propriedades?.nome || 'Não informado'}</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="w-4 h-4 mr-2" />
-                            Detalhes
-                          </Button>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" size="sm">
-                                <Plus className="w-4 h-4 mr-2" />
-                                Receita
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Nova Receita para {animal.nome}</DialogTitle>
-                                <DialogDescription>
-                                  Prescreva medicamentos ou alimentos para este animal
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div>
-                                  <Label htmlFor="nome">Nome da Receita</Label>
-                                  <Input
-                                    id="nome"
-                                    value={newReceita.nome}
-                                    onChange={(e) => setNewReceita({...newReceita, nome: e.target.value, animal_id: animal.id})}
-                                    placeholder="Ex: Tratamento para crescimento"
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="objetivo">Objetivo</Label>
-                                  <Input
-                                    id="objetivo"
-                                    value={newReceita.objetivo}
-                                    onChange={(e) => setNewReceita({...newReceita, objetivo: e.target.value})}
-                                    placeholder="Ex: Ganho de peso, tratamento de doença..."
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="observacoes">Observações</Label>
-                                  <Textarea
-                                    id="observacoes"
-                                    value={newReceita.observacoes}
-                                    onChange={(e) => setNewReceita({...newReceita, observacoes: e.target.value})}
-                                    placeholder="Instruções especiais, posologia..."
-                                  />
-                                </div>
-                              </div>
-                              <DialogFooter>
-                                <Button onClick={handleCreateReceita} disabled={loading}>
-                                  Criar Receita
-                                </Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <ProfileCard 
+                    key={animal.id} 
+                    animal={animal}
+                    onEdit={(animal) => {
+                      setSelectedAnimal(animal);
+                      // Open edit modal
+                    }}
+                  />
                 ))
               )}
             </div>

@@ -1,187 +1,296 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Building2, 
   Users, 
-  DollarSign, 
+  CreditCard, 
   TrendingUp, 
-  Shield,
+  Activity,
   Settings,
-  BarChart3,
-  UserCheck,
-  Plus,
   Search,
-  Filter
+  Filter,
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  Shield,
+  DollarSign,
+  BarChart3
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+
+interface Company {
+  id: string;
+  name: string;
+  email: string;
+  subscription_plan: string;
+  subscription_expires_at: string;
+  created_at: string;
+  is_active: boolean;
+  company_type: string;
+}
+
+interface Subscription {
+  id: string;
+  user_id: string;
+  plan_id: string;
+  status: string;
+  current_period_end: string;
+  created_at: string;
+}
+
+interface Analytics {
+  totalCompanies: number;
+  activeSubscriptions: number;
+  monthlyRevenue: number;
+  churnRate: number;
+  newSignups: number;
+  totalUsers: number;
+}
 
 export default function SuperAdminArea() {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("overview");
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [analytics, setAnalytics] = useState<Analytics>({
+    totalCompanies: 0,
+    activeSubscriptions: 0,
+    monthlyRevenue: 0,
+    churnRate: 0,
+    newSignups: 0,
+    totalUsers: 0
+  });
+  const [loading, setLoading] = useState(false);
 
-  // Mock data - em produção viria do banco
-  const stats = {
-    totalCompanies: 34,
-    activeSubscriptions: 29,
-    totalRevenue: 145600,
-    monthlyGrowth: 18.5,
-    totalUsers: 156,
-    activeUsers: 142
+  useEffect(() => {
+    if (user) {
+      loadSuperAdminData();
+    }
+  }, [user]);
+
+  const loadSuperAdminData = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+
+      // Check if user is super admin
+      const { data: userRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'super_admin')
+        .single();
+
+      if (!userRole) {
+        toast({
+          title: "Acesso negado",
+          description: "Você não tem permissão para acessar esta área.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Load companies
+      const { data: companiesData } = await supabase
+        .from('companies')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      // Load subscriptions
+      const { data: subscriptionsData } = await supabase
+        .from('user_subscriptions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      // Load user count
+      const { count: userCount } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      setCompanies(companiesData || []);
+      setSubscriptions(subscriptionsData || []);
+
+      // Calculate analytics
+      const activeSubscriptions = subscriptionsData?.filter(s => s.status === 'active').length || 0;
+      const thisMonth = new Date();
+      thisMonth.setDate(1);
+      const newSignups = companiesData?.filter(c => new Date(c.created_at) >= thisMonth).length || 0;
+
+      setAnalytics({
+        totalCompanies: companiesData?.length || 0,
+        activeSubscriptions,
+        monthlyRevenue: activeSubscriptions * 99.90, // Mock calculation
+        churnRate: 5.2, // Mock data
+        newSignups,
+        totalUsers: userCount || 0
+      });
+
+    } catch (error) {
+      console.error('Error loading super admin data:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar dados administrativos",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const recentCompanies = [
-    { id: 1, name: "Clínica Veterinária São Paulo", type: "Veterinário", plan: "Pro", status: "Ativo", users: 5 },
-    { id: 2, name: "MedVet Pharma", type: "Medicamentos", plan: "Enterprise", status: "Ativo", users: 12 },
-    { id: 3, name: "NutriPet Foods", type: "Alimentos", plan: "Basic", status: "Pendente", users: 3 }
+  const revenueData = [
+    { month: 'Jan', revenue: 12450 },
+    { month: 'Fev', revenue: 15230 },
+    { month: 'Mar', revenue: 18650 },
+    { month: 'Abr', revenue: 22100 },
+    { month: 'Mai', revenue: 25890 },
+    { month: 'Jun', revenue: 28340 }
   ];
 
-  const subscriptionStats = [
-    { plan: "Básico", count: 12, revenue: "R$ 35.400", color: "blue" },
-    { plan: "Profissional", count: 15, revenue: "R$ 89.250", color: "green" },
-    { plan: "Enterprise", count: 7, revenue: "R$ 20.950", color: "purple" }
+  const planDistribution = [
+    { name: 'Starter', value: 45, color: '#3B82F6' },
+    { name: 'Professional', value: 35, color: '#8B5CF6' },
+    { name: 'Enterprise', value: 20, color: '#10B981' }
   ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/50 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Área de Super Administrador</h1>
+          <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
+            <Shield className="w-8 h-8 text-purple-600" />
+            Super Admin Dashboard
+          </h1>
           <p className="text-muted-foreground">
-            Controle total da plataforma SaaS - empresas, usuários e receitas
+            Painel de controle e analytics do VetSaaS Pro
           </p>
         </div>
 
+        {/* Analytics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Empresas</CardTitle>
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analytics.totalCompanies}</div>
+              <p className="text-xs text-green-600">
+                +{analytics.newSignups} este mês
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Assinaturas Ativas</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analytics.activeSubscriptions}</div>
+              <p className="text-xs text-muted-foreground">
+                Taxa de conversão: 85%
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Receita Mensal</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">R$ {analytics.monthlyRevenue.toFixed(2)}</div>
+              <p className="text-xs text-green-600">
+                +12% vs mês anterior
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Usuários</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analytics.totalUsers}</div>
+              <p className="text-xs text-muted-foreground">
+                Churn: {analytics.churnRate}%
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="companies">Empresas</TabsTrigger>
-            <TabsTrigger value="users">Usuários</TabsTrigger>
-            <TabsTrigger value="billing">Faturamento</TabsTrigger>
-            <TabsTrigger value="plans">Planos</TabsTrigger>
-            <TabsTrigger value="settings">Configurações</TabsTrigger>
+            <TabsTrigger value="subscriptions">Assinaturas</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dashboard" className="space-y-6">
-            {/* Status Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total de Empresas</CardTitle>
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalCompanies}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {stats.activeSubscriptions} com assinatura ativa
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Usuários Ativos</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.activeUsers}</div>
-                  <div className="text-xs text-muted-foreground mb-2">
-                    de {stats.totalUsers} total
-                  </div>
-                  <Progress value={(stats.activeUsers / stats.totalUsers) * 100} className="h-2" />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Receita Mensal</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">R$ {(stats.totalRevenue / 1000).toFixed(0)}k</div>
-                  <p className="text-xs text-muted-foreground">
-                    Este mês
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Crescimento</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">+{stats.monthlyGrowth}%</div>
-                  <p className="text-xs text-muted-foreground">
-                    vs. mês anterior
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Recent Activity */}
+          <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Empresas Recentes</CardTitle>
-                  <CardDescription>Últimas empresas cadastradas</CardDescription>
+                  <CardTitle>Receita Mensal</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {recentCompanies.map((company) => (
-                      <div key={company.id} className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{company.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {company.type} - {company.users} usuários
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <Badge variant={company.status === "Ativo" ? "default" : "secondary"}>
-                            {company.plan}
-                          </Badge>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {company.status}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <Button variant="outline" className="w-full mt-4">
-                    Ver Todas as Empresas
-                  </Button>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={revenueData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="revenue" stroke="#8b5cf6" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Estatísticas de Planos</CardTitle>
-                  <CardDescription>Distribuição por tipo de plano</CardDescription>
+                  <CardTitle>Distribuição de Planos</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {subscriptionStats.map((stat, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{stat.plan}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {stat.count} empresas
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium">{stat.revenue}</p>
-                          <Badge variant="outline">
-                            {((stat.count / stats.activeSubscriptions) * 100).toFixed(1)}%
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <Button variant="outline" className="w-full mt-4">
-                    Relatório Completo
-                  </Button>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={planDistribution}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {planDistribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </CardContent>
               </Card>
             </div>
@@ -189,88 +298,137 @@ export default function SuperAdminArea() {
 
           <TabsContent value="companies" className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Gestão de Empresas</h2>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Nova Empresa
-              </Button>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                <input
-                  placeholder="Buscar empresas..."
-                  className="w-full pl-10 pr-4 py-2 border rounded-lg"
-                />
+              <h2 className="text-2xl font-bold">Gerenciar Empresas</h2>
+              <div className="flex gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                  <Input placeholder="Buscar empresas..." className="pl-10 w-64" />
+                </div>
+                <Button variant="outline">
+                  <Filter className="w-4 h-4 mr-2" />
+                  Filtros
+                </Button>
               </div>
-              <Button variant="outline">
-                <Filter className="w-4 h-4 mr-2" />
-                Filtros
-              </Button>
             </div>
 
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-center text-muted-foreground">
-                  Lista completa de empresas será implementada aqui
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="users" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Gestão de Usuários</h2>
-              <Button>
-                <UserCheck className="w-4 h-4 mr-2" />
-                Novo Usuário
-              </Button>
+            <div className="grid gap-4">
+              {companies.map((company) => (
+                <Card key={company.id}>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-semibold text-lg">{company.name}</h3>
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                          <p>Email: {company.email}</p>
+                          <p>Tipo: {company.company_type}</p>
+                          <p>Criado em: {new Date(company.created_at).toLocaleDateString('pt-BR')}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={company.is_active ? "default" : "secondary"}>
+                          {company.is_active ? "Ativa" : "Inativa"}
+                        </Badge>
+                        <Badge variant="outline">
+                          {company.subscription_plan}
+                        </Badge>
+                        <div className="flex gap-1">
+                          <Button variant="outline" size="sm">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-center text-muted-foreground">
-                  Lista de usuários será implementada aqui
-                </p>
-              </CardContent>
-            </Card>
           </TabsContent>
 
-          <TabsContent value="billing" className="space-y-6">
-            <h2 className="text-2xl font-bold">Faturamento e Pagamentos</h2>
+          <TabsContent value="subscriptions" className="space-y-6">
+            <h2 className="text-2xl font-bold">Gerenciar Assinaturas</h2>
             
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-center text-muted-foreground">
-                  Sistema de faturamento será implementado aqui
-                </p>
-              </CardContent>
-            </Card>
+            <div className="grid gap-4">
+              {subscriptions.map((subscription) => (
+                <Card key={subscription.id}>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-semibold">{subscription.plan_id}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Usuário: {subscription.user_id}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Termina em: {new Date(subscription.current_period_end).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                      <Badge variant={subscription.status === 'active' ? "default" : "secondary"}>
+                        {subscription.status}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
 
-          <TabsContent value="plans" className="space-y-6">
-            <h2 className="text-2xl font-bold">Gestão de Planos</h2>
+          <TabsContent value="analytics" className="space-y-6">
+            <h2 className="text-2xl font-bold">Analytics Detalhados</h2>
             
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-center text-muted-foreground">
-                  Configuração de planos será implementada aqui
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Métricas de Crescimento</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between">
+                    <span>CAC (Custo de Aquisição)</span>
+                    <span className="font-bold">R$ 85,50</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>LTV (Lifetime Value)</span>
+                    <span className="font-bold">R$ 2.400,00</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>LTV/CAC Ratio</span>
+                    <span className="font-bold text-green-600">28:1</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Payback Period</span>
+                    <span className="font-bold">2.1 meses</span>
+                  </div>
+                </CardContent>
+              </Card>
 
-          <TabsContent value="settings" className="space-y-6">
-            <h2 className="text-2xl font-bold">Configurações do Sistema</h2>
-            
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-center text-muted-foreground">
-                  Configurações gerais serão implementadas aqui
-                </p>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Retenção de Clientes</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between">
+                    <span>Retenção 30 dias</span>
+                    <span className="font-bold text-green-600">94%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Retenção 90 dias</span>
+                    <span className="font-bold text-green-600">87%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Retenção 12 meses</span>
+                    <span className="font-bold text-yellow-600">72%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Churn Rate Mensal</span>
+                    <span className="font-bold text-red-600">5.2%</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
