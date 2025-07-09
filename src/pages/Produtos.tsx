@@ -1,290 +1,217 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Package2, Search, Star, Award, Zap, Leaf, Heart, Eye, BarChart3, Filter, ArrowUpDown, X } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { 
+  Package, 
+  Search, 
+  Filter, 
+  Star,
+  ShoppingCart,
+  Eye,
+  Heart,
+  Truck,
+  CheckCircle
+} from "lucide-react";
+import { useCompany } from "@/contexts/CompanyContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+
+interface Product {
+  id: string;
+  nome: string;
+  categoria: string;
+  linha: string;
+  preco_por_kg: number;
+  composicao: any;
+  beneficios: string[];
+  especie_alvo: string[];
+  fase_alvo: string[];
+  ativo: boolean;
+  company_id: string;
+  companies?: { name: string };
+}
 
 export default function Produtos() {
-  const { toast } = useToast();
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const { currentCompany } = useCompany();
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("catalog");
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [favorites, setFavorites] = useState<number[]>([]);
-  const [compareList, setCompareList] = useState<number[]>([]);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [sortBy, setSortBy] = useState("name");
-  const [selectedSpecies, setSelectedSpecies] = useState<string[]>([]);
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 100 });
-  const [minRating, setMinRating] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  
+  // Estados para dados
+  const [products, setProducts] = useState<Product[]>([]);
+  const [favoriteProducts, setFavoriteProducts] = useState<string[]>([]);
+  const [cartItems, setCartItems] = useState<string[]>([]);
 
-  const productLines = [
-    {
-      id: 1,
-      name: "Probionutri Digestivo",
-      line: "Probionutri",
-      category: "probiotico",
-      rating: 4.8,
-      price: "R$ 45,00/kg",
-      priceValue: 45,
-      description: "Probiótico avançado para melhoria da digestibilidade e saúde intestinal",
-      benefits: ["Melhora FCR", "Reduz mortalidade", "Fortalece imunidade"],
-      species: ["Suínos", "Aves", "Bovinos"],
-      icon: Zap,
-      color: "tech-blue",
-      details: {
-        composition: "Lactobacillus acidophilus, Bacillus subtilis, Enzimas digestivas",
-        dosage: "0.5-1.0 kg/ton de ração",
-        storage: "Local seco e arejado, temperatura até 25°C",
-        validity: "24 meses"
-      }
-    },
-    {
-      id: 2,
-      name: "Receita Especial Crescimento",
-      line: "Receita Especial",
-      category: "nutricional",
-      rating: 4.9,
-      price: "R$ 38,00/kg",
-      priceValue: 38,
-      description: "Fórmula balanceada para maximizar ganho de peso em fase de crescimento",
-      benefits: ["Acelera crescimento", "Melhora conversão", "Reduz custos"],
-      species: ["Suínos", "Bovinos"],
-      icon: Award,
-      color: "success",
-      details: {
-        composition: "Proteína 18%, Gordura 4%, Fibra 6%, Minerais 8%",
-        dosage: "2-3% do peso vivo/dia",
-        storage: "Local seco, protegido da luz solar",
-        validity: "12 meses"
-      }
-    },
-    {
-      id: 3,
-      name: "EcoNutri Sustentável",
-      line: "EcoNutri",
-      category: "sustentavel",
-      rating: 4.7,
-      price: "R$ 42,00/kg",
-      priceValue: 42,
-      description: "Nutrição sustentável com ingredientes de baixo impacto ambiental",
-      benefits: ["Menor pegada carbono", "Ingredientes locais", "Certificação verde"],
-      species: ["Aves", "Bovinos", "Ovinos"],
-      icon: Leaf,
-      color: "sustainability",
-      details: {
-        composition: "Ingredientes orgânicos certificados, sem transgênicos",
-        dosage: "1.5-2.5% do peso vivo/dia",
-        storage: "Ambiente controlado, umidade < 70%",
-        validity: "18 meses"
-      }
-    },
-    {
-      id: 4,
-      name: "Probionutri Lactação",
-      line: "Probionutri",
-      category: "probiotico",
-      rating: 4.8,
-      price: "R$ 52,00/kg",
-      priceValue: 52,
-      description: "Especializado para fêmeas em lactação, melhora produção de leite",
-      benefits: ["Aumenta produção", "Melhora qualidade", "Reduz estresse"],
-      species: ["Bovinos", "Suínos"],
-      icon: Star,
-      color: "primary",
-      details: {
-        composition: "Probióticos específicos, Vitaminas A,D,E, Cálcio quelado",
-        dosage: "1-2 kg/ton de ração",
-        storage: "Refrigeração recomendada após abertura",
-        validity: "18 meses"
-      }
-    },
-    {
-      id: 5,
-      name: "Receita Especial Terminação",
-      line: "Receita Especial",
-      category: "nutricional",
-      rating: 4.6,
-      price: "R$ 35,00/kg",
-      priceValue: 35,
-      description: "Otimizado para fase de terminação com foco em acabamento",
-      benefits: ["Melhora acabamento", "Reduz tempo", "Qualidade carcaça"],
-      species: ["Suínos", "Bovinos"],
-      icon: Package2,
-      color: "warning",
-      details: {
-        composition: "Alto teor energético, Aminoácidos essenciais, Minerais quelatados",
-        dosage: "3-4% do peso vivo/dia",
-        storage: "Local seco e ventilado",
-        validity: "15 meses"
-      }
+  useEffect(() => {
+    if (currentCompany && user) {
+      loadProducts();
     }
-  ];
+  }, [currentCompany, user]);
 
-  const allSpecies = Array.from(new Set(productLines.flatMap(p => p.species)));
+  const loadProducts = async () => {
+    if (!currentCompany || !user) return;
 
-  const filteredProducts = productLines.filter(product => {
-    const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSpecies = selectedSpecies.length === 0 || 
-                          selectedSpecies.some(species => product.species.includes(species));
-    const matchesPrice = product.priceValue >= priceRange.min && product.priceValue <= priceRange.max;
-    const matchesRating = product.rating >= minRating;
-    
-    return matchesCategory && matchesSearch && matchesSpecies && matchesPrice && matchesRating;
-  });
+    try {
+      setLoading(true);
 
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    switch (sortBy) {
-      case "name":
-        return a.name.localeCompare(b.name);
-      case "price":
-        return a.priceValue - b.priceValue;
-      case "rating":
-        return b.rating - a.rating;
-      default:
-        return 0;
-    }
-  });
+      // Carregar produtos do catálogo (de todas as empresas)
+      const { data: productsData } = await supabase
+        .from('catalog_products')
+        .select(`
+          *,
+          companies(name)
+        `)
+        .eq('ativo', true)
+        .order('nome', { ascending: true });
 
-  const toggleFavorite = (productId: number) => {
-    setFavorites(prev => {
-      const isAlreadyFavorite = prev.includes(productId);
-      const newFavorites = isAlreadyFavorite 
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId];
-      
+      setProducts(productsData || []);
+
+    } catch (error) {
+      console.error('Erro ao carregar produtos:', error);
       toast({
-        title: isAlreadyFavorite ? "Removido dos favoritos" : "Adicionado aos favoritos",
-        description: isAlreadyFavorite 
-          ? "Produto removido da sua lista de favoritos"
-          : "Produto adicionado à sua lista de favoritos"
+        title: "Erro",
+        description: "Erro ao carregar catálogo de produtos",
+        variant: "destructive"
       });
-      
-      return newFavorites;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleFavorite = (productId: string) => {
+    setFavoriteProducts(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+    
+    toast({
+      title: favoriteProducts.includes(productId) ? "Removido dos favoritos" : "Adicionado aos favoritos",
+      description: "Produto atualizado em sua lista de favoritos"
     });
   };
 
-  const toggleCompare = (productId: number) => {
-    setCompareList(prev => {
-      if (prev.includes(productId)) {
-        return prev.filter(id => id !== productId);
-      } else if (prev.length < 3) {
-        toast({
-          title: "Produto adicionado à comparação",
-          description: "Você pode comparar até 3 produtos"
-        });
-        return [...prev, productId];
-      } else {
-        toast({
-          title: "Limite de comparação atingido",
-          description: "Você só pode comparar até 3 produtos por vez",
-          variant: "destructive"
-        });
-        return prev;
-      }
+  const toggleCart = (productId: string) => {
+    setCartItems(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+    
+    toast({
+      title: cartItems.includes(productId) ? "Removido do carrinho" : "Adicionado ao carrinho",
+      description: "Carrinho atualizado com sucesso"
     });
   };
 
-  const getColorClass = (color: string) => {
-    const colorMap: { [key: string]: string } = {
-      "tech-blue": "border-tech-blue/20 bg-tech-blue/5",
-      "success": "border-success/20 bg-success/5",
-      "sustainability": "border-sustainability/20 bg-sustainability/5",
-      "primary": "border-primary/20 bg-primary/5",
-      "warning": "border-warning/20 bg-warning/5"
-    };
-    return colorMap[color] || "border-border bg-background";
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         product.categoria.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = !selectedCategory || product.categoria === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const categories = [...new Set(products.map(p => p.categoria))];
+
+  const stats = {
+    totalProducts: products.length,
+    favoriteCount: favoriteProducts.length,
+    cartCount: cartItems.length,
+    categoriesCount: categories.length
   };
 
-  const compareProducts = productLines.filter(p => compareList.includes(p.id));
+  if (loading && products.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Produtos Alinutri</h1>
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/50 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Catálogo de Produtos</h1>
           <p className="text-muted-foreground">
-            Soluções nutricionais personalizadas para seu rebanho
+            Explore produtos de nutrição animal de empresas parceiras
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-            <Package2 className="w-4 h-4 mr-1" />
-            {sortedProducts.length} produtos
-          </Badge>
-          {compareList.length > 0 && (
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  Comparar ({compareList.length})
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Comparação de Produtos</DialogTitle>
-                </DialogHeader>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {compareProducts.map(product => (
-                    <Card key={product.id} variant="elevated">
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-lg">{product.name}</CardTitle>
-                          <Button
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => toggleCompare(product.id)}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        <Badge variant="outline">{product.line}</Badge>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <Star className="w-4 h-4 fill-warning text-warning" />
-                          <span className="font-medium">{product.rating}</span>
-                        </div>
-                        <p className="text-lg font-bold text-primary">{product.price}</p>
-                        <div>
-                          <p className="text-sm font-medium mb-1">Benefícios:</p>
-                          {product.benefits.map(benefit => (
-                            <Badge key={benefit} variant="secondary" className="text-xs mr-1 mb-1">
-                              {benefit}
-                            </Badge>
-                          ))}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium mb-1">Espécies:</p>
-                          {product.species.map(species => (
-                            <Badge key={species} variant="outline" className="text-xs mr-1">
-                              {species}
-                            </Badge>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
-      </div>
 
-      {/* Filters */}
-      <Card variant="gradient">
-        <CardContent className="pt-6">
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        {/* Cards de Estatísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Produtos Disponíveis</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalProducts}</div>
+              <p className="text-xs text-muted-foreground">
+                No catálogo
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Categorias</CardTitle>
+              <Filter className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.categoriesCount}</div>
+              <p className="text-xs text-muted-foreground">
+                Diferentes tipos
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Favoritos</CardTitle>
+              <Heart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.favoriteCount}</div>
+              <p className="text-xs text-muted-foreground">
+                Produtos salvos
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Carrinho</CardTitle>
+              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.cartCount}</div>
+              <p className="text-xs text-muted-foreground">
+                Itens selecionados
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="catalog">Catálogo</TabsTrigger>
+            <TabsTrigger value="favorites">Favoritos</TabsTrigger>
+            <TabsTrigger value="cart">Carrinho</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="catalog" className="space-y-6">
+            {/* Filtros */}
+            <div className="flex gap-4 flex-wrap">
+              <div className="relative flex-1 min-w-64">
+                <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar produtos..."
                   value={searchTerm}
@@ -292,276 +219,256 @@ export default function Produtos() {
                   className="pl-10"
                 />
               </div>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as categorias</SelectItem>
-                  <SelectItem value="probiotico">Probióticos</SelectItem>
-                  <SelectItem value="nutricional">Nutricionais</SelectItem>
-                  <SelectItem value="sustentavel">Sustentáveis</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Ordenar por" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="name">Nome</SelectItem>
-                  <SelectItem value="price">Preço</SelectItem>
-                  <SelectItem value="rating">Avaliação</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className="flex items-center gap-2"
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="px-4 py-2 border rounded-lg bg-background"
               >
-                <Filter className="w-4 h-4" />
-                Filtros
-              </Button>
+                <option value="">Todas as categorias</option>
+                {categories.map(category => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {showAdvancedFilters && (
-              <div className="border-t pt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Espécies</label>
-                  <div className="space-y-2">
-                    {allSpecies.map(species => (
-                      <div key={species} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={species}
-                          checked={selectedSpecies.includes(species)}
-                          onCheckedChange={(checked) => {
-                            setSelectedSpecies(prev =>
-                              checked
-                                ? [...prev, species]
-                                : prev.filter(s => s !== species)
-                            );
-                          }}
-                        />
-                        <label htmlFor={species} className="text-sm">{species}</label>
-                      </div>
-                    ))}
-                  </div>
+            {/* Grid de Produtos */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProducts.length === 0 ? (
+                <div className="col-span-full">
+                  <Card>
+                    <CardContent className="p-12 text-center">
+                      <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold mb-2">Nenhum produto encontrado</h3>
+                      <p className="text-muted-foreground">
+                        Tente ajustar os filtros ou termos de busca.
+                      </p>
+                    </CardContent>
+                  </Card>
                 </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Faixa de Preço (R$/kg)</label>
-                  <div className="space-y-2">
-                    <Input
-                      type="number"
-                      placeholder="Mín"
-                      value={priceRange.min}
-                      onChange={(e) => setPriceRange(prev => ({ ...prev, min: Number(e.target.value) }))}
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Máx"
-                      value={priceRange.max}
-                      onChange={(e) => setPriceRange(prev => ({ ...prev, max: Number(e.target.value) }))}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Avaliação Mínima</label>
-                  <Select value={minRating.toString()} onValueChange={(value) => setMinRating(Number(value))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="0">Todas</SelectItem>
-                      <SelectItem value="4">4+ estrelas</SelectItem>
-                      <SelectItem value="4.5">4.5+ estrelas</SelectItem>
-                      <SelectItem value="4.8">4.8+ estrelas</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Products Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {sortedProducts.map((product) => (
-          <Card key={product.id} variant="elevated" className="group hover:shadow-lg transition-all duration-300">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className={`p-3 rounded-lg ${getColorClass(product.color)}`}>
-                  <product.icon className="w-6 h-6" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleFavorite(product.id)}
-                    className="p-1 h-8 w-8"
-                  >
-                    <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
-                  </Button>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 fill-warning text-warning" />
-                    <span className="text-sm font-medium">{product.rating}</span>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <CardTitle className="text-lg">{product.name}</CardTitle>
-                <Badge variant="outline" className="mt-1 text-xs">
-                  {product.line}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                {product.description}
-              </p>
-              
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Benefícios principais:</p>
-                <div className="flex flex-wrap gap-1">
-                  {product.benefits.map((benefit, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {benefit}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Espécies:</p>
-                <div className="flex flex-wrap gap-1">
-                  {product.species.map((specie, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      {specie}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-4 border-t">
-                <div>
-                  <p className="text-lg font-bold text-primary">{product.price}</p>
-                  <p className="text-xs text-muted-foreground">Preço sugerido</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => toggleCompare(product.id)}
-                    className={compareList.includes(product.id) ? "bg-primary/10 border-primary" : ""}
-                  >
-                    <BarChart3 className="w-4 h-4" />
-                  </Button>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="tech" size="sm" onClick={() => setSelectedProduct(product)}>
-                        <Eye className="w-4 h-4 mr-1" />
-                        Detalhes
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
-                      <DialogHeader>
-                        <DialogTitle className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${getColorClass(product.color)}`}>
-                            <product.icon className="w-5 h-5" />
-                          </div>
-                          {product.name}
-                        </DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Star className="w-5 h-5 fill-warning text-warning" />
-                            <span className="font-medium">{product.rating}</span>
-                            <Badge variant="outline">{product.line}</Badge>
-                          </div>
-                          <p className="text-2xl font-bold text-primary">{product.price}</p>
+              ) : (
+                filteredProducts.map((product) => (
+                  <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                    <div className="aspect-video bg-gradient-to-r from-blue-100 to-green-100 flex items-center justify-center">
+                      <Package className="w-12 h-12 text-muted-foreground" />
+                    </div>
+                    <CardContent className="p-6">
+                      <div className="space-y-3">
+                        <div>
+                          <h3 className="font-semibold text-lg line-clamp-1">{product.nome}</h3>
+                          <p className="text-sm text-muted-foreground">{product.companies?.name}</p>
                         </div>
-                        
-                        <p className="text-muted-foreground">{product.description}</p>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        <div className="flex gap-2 flex-wrap">
+                          <Badge variant="outline">{product.categoria}</Badge>
+                          {product.linha && (
+                            <Badge variant="secondary">{product.linha}</Badge>
+                          )}
+                        </div>
+
+                        {product.especie_alvo && product.especie_alvo.length > 0 && (
                           <div>
-                            <h4 className="font-medium mb-2">Benefícios</h4>
-                            <div className="space-y-1">
-                              {product.benefits.map(benefit => (
-                                <div key={benefit} className="flex items-center gap-2">
-                                  <div className="w-1.5 h-1.5 bg-success rounded-full" />
-                                  <span className="text-sm">{benefit}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <h4 className="font-medium mb-2">Espécies</h4>
-                            <div className="flex flex-wrap gap-1">
-                              {product.species.map(species => (
-                                <Badge key={species} variant="outline" className="text-xs">
-                                  {species}
+                            <p className="text-xs text-muted-foreground mb-1">Espécies:</p>
+                            <div className="flex gap-1 flex-wrap">
+                              {product.especie_alvo.slice(0, 3).map((especie, index) => (
+                                <Badge key={index} variant="outline" className="text-xs">
+                                  {especie}
                                 </Badge>
                               ))}
+                              {product.especie_alvo.length > 3 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{product.especie_alvo.length - 3}
+                                </Badge>
+                              )}
                             </div>
                           </div>
-                        </div>
+                        )}
 
-                        <div className="space-y-4">
-                          <h4 className="font-medium">Informações Técnicas</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <span className="font-medium">Composição:</span>
-                              <p className="text-muted-foreground">{product.details.composition}</p>
-                            </div>
-                            <div>
-                              <span className="font-medium">Dosagem:</span>
-                              <p className="text-muted-foreground">{product.details.dosage}</p>
-                            </div>
-                            <div>
-                              <span className="font-medium">Armazenamento:</span>
-                              <p className="text-muted-foreground">{product.details.storage}</p>
-                            </div>
-                            <div>
-                              <span className="font-medium">Validade:</span>
-                              <p className="text-muted-foreground">{product.details.validity}</p>
-                            </div>
+                        {product.preco_por_kg && (
+                          <div className="pt-2 border-t">
+                            <p className="text-lg font-bold text-green-600">
+                              R$ {product.preco_por_kg.toFixed(2)}/kg
+                            </p>
                           </div>
+                        )}
+
+                        <div className="flex gap-2 pt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleFavorite(product.id)}
+                            className={favoriteProducts.includes(product.id) ? "bg-red-50 border-red-200" : ""}
+                          >
+                            <Heart 
+                              className={`w-4 h-4 ${favoriteProducts.includes(product.id) ? "fill-red-500 text-red-500" : ""}`} 
+                            />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            Detalhes
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => toggleCart(product.id)}
+                            className={cartItems.includes(product.id) ? "bg-green-600 hover:bg-green-700" : ""}
+                          >
+                            {cartItems.includes(product.id) ? (
+                              <CheckCircle className="w-4 h-4" />
+                            ) : (
+                              <ShoppingCart className="w-4 h-4" />
+                            )}
+                          </Button>
                         </div>
                       </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </TabsContent>
 
-      {sortedProducts.length === 0 && (
-        <Card variant="default">
-          <CardContent className="text-center py-12">
-            <Package2 className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <p className="text-muted-foreground">
-              Nenhum produto encontrado com os filtros selecionados
-            </p>
-            <Button 
-              variant="outline" 
-              className="mt-4"
-              onClick={() => {
-                setSelectedCategory("all");
-                setSearchTerm("");
-                setSelectedSpecies([]);
-                setPriceRange({ min: 0, max: 100 });
-                setMinRating(0);
-              }}
-            >
-              Limpar filtros
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+          <TabsContent value="favorites" className="space-y-6">
+            <h2 className="text-2xl font-bold">Produtos Favoritos</h2>
+            
+            {favoriteProducts.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">Nenhum produto favorito</h3>
+                  <p className="text-muted-foreground">
+                    Adicione produtos aos favoritos para acessá-los rapidamente.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {products
+                  .filter(product => favoriteProducts.includes(product.id))
+                  .map((product) => (
+                    <Card key={product.id} className="overflow-hidden">
+                      <div className="aspect-video bg-gradient-to-r from-blue-100 to-green-100 flex items-center justify-center">
+                        <Package className="w-12 h-12 text-muted-foreground" />
+                      </div>
+                      <CardContent className="p-6">
+                        <div className="space-y-3">
+                          <div>
+                            <h3 className="font-semibold text-lg">{product.nome}</h3>
+                            <p className="text-sm text-muted-foreground">{product.companies?.name}</p>
+                          </div>
+
+                          <Badge variant="outline">{product.categoria}</Badge>
+
+                          {product.preco_por_kg && (
+                            <p className="text-lg font-bold text-green-600">
+                              R$ {product.preco_por_kg.toFixed(2)}/kg
+                            </p>
+                          )}
+
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => toggleFavorite(product.id)}
+                              className="bg-red-50 border-red-200"
+                            >
+                              <Heart className="w-4 h-4 fill-red-500 text-red-500" />
+                            </Button>
+                            <Button variant="outline" size="sm" className="flex-1">
+                              <Eye className="w-4 h-4 mr-2" />
+                              Ver Detalhes
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="cart" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Carrinho de Compras</h2>
+              {cartItems.length > 0 && (
+                <Button>
+                  <Truck className="w-4 h-4 mr-2" />
+                  Solicitar Cotação
+                </Button>
+              )}
+            </div>
+            
+            {cartItems.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <ShoppingCart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">Carrinho vazio</h3>
+                  <p className="text-muted-foreground">
+                    Adicione produtos ao carrinho para solicitar cotações.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {products
+                  .filter(product => cartItems.includes(product.id))
+                  .map((product) => (
+                    <Card key={product.id}>
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-lg">{product.nome}</h3>
+                            <p className="text-muted-foreground">{product.companies?.name}</p>
+                            <div className="flex gap-2 mt-2">
+                              <Badge variant="outline">{product.categoria}</Badge>
+                              {product.linha && (
+                                <Badge variant="secondary">{product.linha}</Badge>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            {product.preco_por_kg && (
+                              <p className="text-lg font-bold text-green-600">
+                                R$ {product.preco_por_kg.toFixed(2)}/kg
+                              </p>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => toggleCart(product.id)}
+                              className="mt-2"
+                            >
+                              Remover
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                
+                <Card className="bg-green-50 border-green-200">
+                  <CardContent className="p-6">
+                    <div className="text-center">
+                      <h3 className="font-semibold text-lg mb-2">Pronto para solicitar cotação?</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Você tem {cartItems.length} produtos selecionados
+                      </p>
+                      <Button className="bg-green-600 hover:bg-green-700">
+                        <Truck className="w-4 h-4 mr-2" />
+                        Solicitar Cotação Completa
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

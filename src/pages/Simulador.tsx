@@ -1,457 +1,661 @@
+
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Slider } from "@/components/ui/slider";
-import { Progress } from "@/components/ui/progress";
-import { FlaskConical, TrendingUp, Calculator, Target, AlertCircle, CheckCircle, Zap, BarChart3 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { 
+  Pill, 
+  Plus,
+  Search,
+  Filter,
+  Edit,
+  Eye,
+  CheckCircle,
+  Clock,
+  Target,
+  Beaker,
+  Calculator
+} from "lucide-react";
+import { useCompany } from "@/contexts/CompanyContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
-interface Ingredient {
-  name: string;
-  protein: number;
-  energy: number;
-  cost: number;
-  maxPercent: number;
-  minPercent: number;
+interface Receita {
+  id: string;
+  nome: string;
+  objetivo: string;
+  formula: any;
+  observacoes: string;
+  ativa: boolean;
+  eficiencia_esperada: number;
+  custo_estimado: number;
+  created_at: string;
+  animais?: { nome: string; especie: string };
 }
-
-interface Formulation {
-  ingredients: { [key: string]: number };
-  totalProtein: number;
-  totalEnergy: number;
-  totalCost: number;
-  isValid: boolean;
-  efficiency: number;
-}
-
-const ingredients: Ingredient[] = [
-  { name: "Milho", protein: 8.5, energy: 3350, cost: 0.65, maxPercent: 70, minPercent: 0 },
-  { name: "Farelo de Soja", protein: 46, energy: 2230, cost: 1.85, maxPercent: 35, minPercent: 0 },
-  { name: "Farelo de Trigo", protein: 17, energy: 1900, cost: 0.55, maxPercent: 20, minPercent: 0 },
-  { name: "Calcário", protein: 0, energy: 0, cost: 0.12, maxPercent: 2, minPercent: 0.5 },
-  { name: "Fosfato Bicálcico", protein: 0, energy: 0, cost: 2.50, maxPercent: 2.5, minPercent: 0.8 },
-  { name: "Sal Comum", protein: 0, energy: 0, cost: 0.45, maxPercent: 0.8, minPercent: 0.3 },
-  { name: "Premix Vitamínico", protein: 0, energy: 0, cost: 8.50, maxPercent: 0.5, minPercent: 0.25 },
-];
 
 export default function Simulador() {
-  const [animalType, setAnimalType] = useState("suinos");
-  const [phase, setPhase] = useState("crescimento");
-  const [targetProtein, setTargetProtein] = useState(16);
-  const [targetEnergy, setTargetEnergy] = useState(3200);
-  const [maxCost, setMaxCost] = useState(1.20);
-  const [formulation, setFormulation] = useState<Formulation | null>(null);
-  const [isOptimizing, setIsOptimizing] = useState(false);
-  const [ingredientPercentages, setIngredientPercentages] = useState<{ [key: string]: number }>({});
-  const { toast } = useToast();
+  const { currentCompany } = useCompany();
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("receitas");
+  const [loading, setLoading] = useState(false);
+  
+  // Estados para dados
+  const [receitas, setReceitas] = useState<Receita[]>([]);
+  const [animais, setAnimais] = useState([]);
+  const [products, setProducts] = useState([]);
+  
+  // Estados para formulários
+  const [newReceita, setNewReceita] = useState({
+    nome: '',
+    animal_id: '',
+    objetivo: '',
+    observacoes: '',
+    eficiencia_esperada: '',
+    custo_estimado: ''
+  });
+  
+  // Simulação states
+  const [simulationData, setSimulationData] = useState({
+    animalWeight: '',
+    targetGain: '',
+    feedType: '',
+    period: '',
+    estimatedCost: 0,
+    estimatedGain: 0,
+    efficiency: 0
+  });
+  
+  // Modal states
+  const [isReceitaModalOpen, setIsReceitaModalOpen] = useState(false);
 
-  // Inicializar porcentagens dos ingredientes
   useEffect(() => {
-    const initialPercentages: { [key: string]: number } = {};
-    ingredients.forEach(ing => {
-      initialPercentages[ing.name] = ing.minPercent;
-    });
-    setIngredientPercentages(initialPercentages);
-  }, []);
-
-  const calculateFormulation = (): Formulation => {
-    const total = Object.values(ingredientPercentages).reduce((sum, val) => sum + val, 0);
-    
-    if (Math.abs(total - 100) > 0.1) {
-      return {
-        ingredients: ingredientPercentages,
-        totalProtein: 0,
-        totalEnergy: 0,
-        totalCost: 0,
-        isValid: false,
-        efficiency: 0
-      };
+    if (currentCompany && user) {
+      loadData();
     }
+  }, [currentCompany, user]);
 
-    let totalProtein = 0;
-    let totalEnergy = 0;
-    let totalCost = 0;
+  const loadData = async () => {
+    if (!currentCompany || !user) return;
 
-    ingredients.forEach(ingredient => {
-      const percentage = ingredientPercentages[ingredient.name] || 0;
-      totalProtein += (ingredient.protein * percentage) / 100;
-      totalEnergy += (ingredient.energy * percentage) / 100;
-      totalCost += (ingredient.cost * percentage) / 100;
-    });
+    try {
+      setLoading(true);
 
-    const proteinDiff = Math.abs(totalProtein - targetProtein);
-    const energyDiff = Math.abs(totalEnergy - targetEnergy);
-    const isValid = proteinDiff <= 1 && energyDiff <= 100 && totalCost <= maxCost;
-    
-    const efficiency = isValid ? 
-      Math.max(0, 100 - (proteinDiff * 10) - (energyDiff / 20) - (totalCost / maxCost * 20)) : 0;
+      // Carregar receitas
+      const { data: receitasData } = await supabase
+        .from('receitas')
+        .select(`
+          *,
+          animais(nome, especie)
+        `)
+        .eq('company_id', currentCompany.id)
+        .order('created_at', { ascending: false });
 
-    return {
-      ingredients: ingredientPercentages,
-      totalProtein,
-      totalEnergy,
-      totalCost,
-      isValid,
-      efficiency
-    };
+      // Carregar animais
+      const { data: animaisData } = await supabase
+        .from('animais')
+        .select('*')
+        .eq('company_id', currentCompany.id);
+
+      // Carregar produtos
+      const { data: productsData } = await supabase
+        .from('catalog_products')
+        .select('*')
+        .eq('ativo', true)
+        .limit(10);
+
+      setReceitas(receitasData || []);
+      setAnimais(animaisData || []);
+      setProducts(productsData || []);
+
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar dados",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const optimizeFormulation = async () => {
-    setIsOptimizing(true);
-    
-    // Simulação de otimização
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Algoritmo simples de otimização
-    const optimized: { [key: string]: number } = {};
-    let remainingPercent = 100;
-    
-    // Ingredientes obrigatórios primeiro
-    ingredients.forEach(ing => {
-      if (ing.minPercent > 0) {
-        optimized[ing.name] = ing.minPercent;
-        remainingPercent -= ing.minPercent;
-      } else {
-        optimized[ing.name] = 0;
-      }
-    });
-
-    // Distribuir o restante baseado na eficiência nutricional
-    const mainIngredients = ["Milho", "Farelo de Soja", "Farelo de Trigo"];
-    const proteinNeed = targetProtein;
-    
-    // Ajuste inteligente baseado nas necessidades
-    if (proteinNeed > 18) {
-      optimized["Farelo de Soja"] = Math.min(25, optimized["Farelo de Soja"] + remainingPercent * 0.4);
-      optimized["Milho"] = Math.min(60, optimized["Milho"] + remainingPercent * 0.5);
-      optimized["Farelo de Trigo"] = Math.min(15, optimized["Farelo de Trigo"] + remainingPercent * 0.1);
-    } else {
-      optimized["Milho"] = Math.min(65, optimized["Milho"] + remainingPercent * 0.6);
-      optimized["Farelo de Soja"] = Math.min(20, optimized["Farelo de Soja"] + remainingPercent * 0.3);
-      optimized["Farelo de Trigo"] = Math.min(15, optimized["Farelo de Trigo"] + remainingPercent * 0.1);
+  const handleCreateReceita = async () => {
+    if (!currentCompany || !user || !newReceita.nome || !newReceita.objetivo) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios",
+        variant: "destructive"
+      });
+      return;
     }
 
-    // Normalizar para 100%
-    const currentTotal = Object.values(optimized).reduce((sum, val) => sum + val, 0);
-    Object.keys(optimized).forEach(key => {
-      optimized[key] = (optimized[key] / currentTotal) * 100;
-    });
+    try {
+      setLoading(true);
 
-    setIngredientPercentages(optimized);
-    setIsOptimizing(false);
-    
-    toast({
-      title: "Otimização concluída",
-      description: "Formulação otimizada para suas especificações",
-    });
+      const { error } = await supabase
+        .from('receitas')
+        .insert({
+          ...newReceita,
+          company_id: currentCompany.id,
+          tecnico_id: user.id,
+          formula: {},
+          eficiencia_esperada: parseFloat(newReceita.eficiencia_esperada) || null,
+          custo_estimado: parseFloat(newReceita.custo_estimado) || null
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Receita criada com sucesso!"
+      });
+
+      setIsReceitaModalOpen(false);
+      setNewReceita({
+        nome: '',
+        animal_id: '',
+        objetivo: '',
+        observacoes: '',
+        eficiencia_esperada: '',
+        custo_estimado: ''
+      });
+      loadData();
+
+    } catch (error) {
+      console.error('Erro ao criar receita:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao criar receita",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateIngredientPercentage = (ingredient: string, value: number[]) => {
-    setIngredientPercentages(prev => ({
+  const calculateSimulation = () => {
+    const weight = parseFloat(simulationData.animalWeight) || 0;
+    const targetGain = parseFloat(simulationData.targetGain) || 0;
+    const period = parseInt(simulationData.period) || 1;
+
+    // Cálculos simplificados para simulação
+    const dailyFeed = weight * 0.03; // 3% do peso corporal
+    const totalFeed = dailyFeed * period;
+    const feedCostPerKg = 2.5; // R$ 2,50 por kg
+    const estimatedCost = totalFeed * feedCostPerKg;
+    
+    const efficiency = targetGain > 0 ? totalFeed / targetGain : 0;
+    const estimatedGain = totalFeed / 3; // Conversão alimentar de 3:1
+
+    setSimulationData(prev => ({
       ...prev,
-      [ingredient]: value[0]
+      estimatedCost,
+      estimatedGain,
+      efficiency
     }));
+
+    toast({
+      title: "Simulação calculada",
+      description: "Resultados atualizados com base nos parâmetros informados"
+    });
   };
 
-  const currentFormulation = calculateFormulation();
+  const stats = {
+    totalReceitas: receitas.length,
+    receitasAtivas: receitas.filter(r => r.ativa).length,
+    eficienciaMedia: receitas.length > 0 
+      ? receitas.reduce((sum, r) => sum + (r.eficiencia_esperada || 0), 0) / receitas.length 
+      : 0,
+    custoMedio: receitas.length > 0 
+      ? receitas.reduce((sum, r) => sum + (r.custo_estimado || 0), 0) / receitas.length 
+      : 0
+  };
+
+  if (loading && receitas.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Simulador de Ração</h1>
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/50 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Receitas e Simulações</h1>
           <p className="text-muted-foreground">
-            Otimização inteligente de formulações nutricionais
+            Gerencie receitas veterinárias e simule diferentes cenários nutricionais
           </p>
         </div>
-        <Badge variant="outline" className="bg-tech-blue/10 text-tech-blue border-tech-blue/20">
-          <FlaskConical className="w-4 h-4 mr-1" />
-          IA Formulação
-        </Badge>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Configurações */}
-        <Card variant="tech">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="w-5 h-5" />
-              Especificações
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Animal</Label>
-                <Select value={animalType} onValueChange={setAnimalType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="suinos">Suínos</SelectItem>
-                    <SelectItem value="aves">Aves</SelectItem>
-                    <SelectItem value="bovinos">Bovinos</SelectItem>
-                    <SelectItem value="aquicultura">Aquicultura</SelectItem>
-                  </SelectContent>
-                </Select>
+        {/* Cards de Estatísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Receitas Criadas</CardTitle>
+              <Pill className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalReceitas}</div>
+              <p className="text-xs text-muted-foreground">
+                Total no sistema
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Receitas Ativas</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.receitasAtivas}</div>
+              <p className="text-xs text-muted-foreground">
+                Em uso atualmente
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Eficiência Média</CardTitle>
+              <Target className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {stats.eficienciaMedia > 0 ? stats.eficienciaMedia.toFixed(1) : '-'}
               </div>
+              <p className="text-xs text-muted-foreground">
+                Conversão esperada
+              </p>
+            </CardContent>
+          </Card>
 
-              <div className="space-y-2">
-                <Label>Fase</Label>
-                <Select value={phase} onValueChange={setPhase}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="inicial">Inicial</SelectItem>
-                    <SelectItem value="crescimento">Crescimento</SelectItem>
-                    <SelectItem value="terminacao">Terminação</SelectItem>
-                    <SelectItem value="reproducao">Reprodução</SelectItem>
-                  </SelectContent>
-                </Select>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Custo Médio</CardTitle>
+              <Calculator className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                R$ {stats.custoMedio > 0 ? stats.custoMedio.toFixed(2) : '0.00'}
               </div>
+              <p className="text-xs text-muted-foreground">
+                Por receita
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
-              <div className="space-y-2">
-                <Label>Proteína Bruta (%)</Label>
-                <div className="flex items-center space-x-4">
-                  <Slider
-                    value={[targetProtein]}
-                    onValueChange={(value) => setTargetProtein(value[0])}
-                    max={25}
-                    min={10}
-                    step={0.5}
-                    className="flex-1"
-                  />
-                  <span className="w-12 text-sm font-medium">{targetProtein}%</span>
-                </div>
-              </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="receitas">Receitas</TabsTrigger>
+            <TabsTrigger value="simulator">Simulador</TabsTrigger>
+            <TabsTrigger value="products">Produtos</TabsTrigger>
+          </TabsList>
 
-              <div className="space-y-2">
-                <Label>Energia (kcal/kg)</Label>
-                <div className="flex items-center space-x-4">
-                  <Slider
-                    value={[targetEnergy]}
-                    onValueChange={(value) => setTargetEnergy(value[0])}
-                    max={3500}
-                    min={2800}
-                    step={50}
-                    className="flex-1"
-                  />
-                  <span className="w-16 text-sm font-medium">{targetEnergy}</span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Custo Máximo (R$/kg)</Label>
-                <div className="flex items-center space-x-4">
-                  <Slider
-                    value={[maxCost]}
-                    onValueChange={(value) => setMaxCost(value[0])}
-                    max={2.0}
-                    min={0.8}
-                    step={0.05}
-                    className="flex-1"
-                  />
-                  <span className="w-12 text-sm font-medium">R${maxCost.toFixed(2)}</span>
-                </div>
-              </div>
-
-              <Button 
-                variant="hero" 
-                className="w-full"
-                onClick={optimizeFormulation}
-                disabled={isOptimizing}
-              >
-                {isOptimizing ? (
-                  <>
-                    <Zap className="w-4 h-4 mr-2 animate-pulse" />
-                    Otimizando...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-4 h-4 mr-2" />
-                    Otimizar Automaticamente
-                  </>
-                )}
+          <TabsContent value="receitas" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Gestão de Receitas</h2>
+              <Button onClick={() => setIsReceitaModalOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Nova Receita
               </Button>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Formulação */}
-        <Card variant="gradient">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calculator className="w-5 h-5" />
-              Formulação Manual
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {ingredients.map((ingredient) => (
-                <div key={ingredient.name} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <Label className="text-sm font-medium">{ingredient.name}</Label>
-                    <span className="text-xs text-muted-foreground">
-                      {(ingredientPercentages[ingredient.name] || 0).toFixed(1)}%
-                    </span>
+            <div className="grid gap-4">
+              {receitas.length === 0 ? (
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <Pill className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Nenhuma receita cadastrada</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Crie receitas veterinárias para organizar tratamentos e protocolos.
+                    </p>
+                    <Button onClick={() => setIsReceitaModalOpen(true)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Criar Primeira Receita
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                receitas.map((receita) => (
+                  <Card key={receita.id}>
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold text-lg">{receita.nome}</h3>
+                            <Badge variant={receita.ativa ? "default" : "secondary"}>
+                              {receita.ativa ? "Ativa" : "Inativa"}
+                            </Badge>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-3">
+                            <div>
+                              <p className="text-muted-foreground">Animal</p>
+                              <p className="font-medium">
+                                {receita.animais?.nome || 'Não especificado'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Eficiência Esperada</p>
+                              <p className="font-medium">
+                                {receita.eficiencia_esperada ? receita.eficiencia_esperada.toFixed(1) : 'N/A'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Custo Estimado</p>
+                              <p className="font-medium">
+                                {receita.custo_estimado ? `R$ ${receita.custo_estimado.toFixed(2)}` : 'N/A'}
+                              </p>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-sm">
+                              <strong>Objetivo:</strong> {receita.objetivo}
+                            </p>
+                            {receita.observacoes && (
+                              <p className="text-sm text-muted-foreground">
+                                <strong>Observações:</strong> {receita.observacoes}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm">
+                            <Eye className="w-4 h-4 mr-2" />
+                            Ver
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <Edit className="w-4 h-4 mr-2" />
+                            Editar
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="simulator" className="space-y-6">
+            <h2 className="text-2xl font-bold">Simulador Nutricional</h2>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Parâmetros da Simulação</CardTitle>
+                  <CardDescription>Configure os dados para calcular a performance</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="animalWeight">Peso Atual (kg)</Label>
+                      <Input
+                        id="animalWeight"
+                        type="number"
+                        step="0.1"
+                        value={simulationData.animalWeight}
+                        onChange={(e) => setSimulationData({...simulationData, animalWeight: e.target.value})}
+                        placeholder="Ex: 450"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="targetGain">Ganho Desejado (kg)</Label>
+                      <Input
+                        id="targetGain"
+                        type="number"
+                        step="0.1"
+                        value={simulationData.targetGain}
+                        onChange={(e) => setSimulationData({...simulationData, targetGain: e.target.value})}
+                        placeholder="Ex: 50"
+                      />
+                    </div>
                   </div>
-                  <Slider
-                    value={[ingredientPercentages[ingredient.name] || 0]}
-                    onValueChange={(value) => updateIngredientPercentage(ingredient.name, value)}
-                    max={ingredient.maxPercent}
-                    min={ingredient.minPercent}
-                    step={0.1}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Min: {ingredient.minPercent}%</span>
-                    <span>Max: {ingredient.maxPercent}%</span>
+
+                  <div>
+                    <Label htmlFor="feedType">Tipo de Ração</Label>
+                    <Select value={simulationData.feedType} onValueChange={(value) => setSimulationData({...simulationData, feedType: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo de ração" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="crescimento">Crescimento</SelectItem>
+                        <SelectItem value="engorda">Engorda</SelectItem>
+                        <SelectItem value="manutencao">Manutenção</SelectItem>
+                        <SelectItem value="premium">Premium</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                </div>
+
+                  <div>
+                    <Label htmlFor="period">Período (dias)</Label>
+                    <Input
+                      id="period"
+                      type="number"
+                      value={simulationData.period}
+                      onChange={(e) => setSimulationData({...simulationData, period: e.target.value})}
+                      placeholder="Ex: 90"
+                    />
+                  </div>
+
+                  <Button onClick={calculateSimulation} className="w-full">
+                    <Beaker className="w-4 h-4 mr-2" />
+                    Calcular Simulação
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Resultados da Simulação</CardTitle>
+                  <CardDescription>Projeções baseadas nos parâmetros informados</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Consumo Estimado</p>
+                      <p className="text-2xl font-bold text-blue-600">
+                        {simulationData.estimatedGain > 0 ? `${(simulationData.estimatedGain * 3).toFixed(0)} kg` : '-'}
+                      </p>
+                    </div>
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Ganho Projetado</p>
+                      <p className="text-2xl font-bold text-green-600">
+                        {simulationData.estimatedGain > 0 ? `${simulationData.estimatedGain.toFixed(1)} kg` : '-'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-orange-50 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Custo Estimado</p>
+                      <p className="text-2xl font-bold text-orange-600">
+                        R$ {simulationData.estimatedCost > 0 ? simulationData.estimatedCost.toFixed(2) : '0.00'}
+                      </p>
+                    </div>
+                    <div className="text-center p-4 bg-purple-50 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Conversão Alimentar</p>
+                      <p className="text-2xl font-bold text-purple-600">
+                        {simulationData.efficiency > 0 ? simulationData.efficiency.toFixed(2) : '-'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {simulationData.estimatedCost > 0 && (
+                    <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                      <h4 className="font-semibold mb-2">Análise</h4>
+                      <div className="space-y-2 text-sm">
+                        <p>• Custo por kg de ganho: R$ {(simulationData.estimatedCost / simulationData.estimatedGain).toFixed(2)}</p>
+                        <p>• Período para meta: {simulationData.period} dias</p>
+                        <p>• Eficiência: {simulationData.efficiency < 3.5 ? 'Boa' : 'Pode melhorar'}</p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="products" className="space-y-6">
+            <h2 className="text-2xl font-bold">Produtos Recomendados</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {products.map((product) => (
+                <Card key={product.id}>
+                  <CardContent className="p-6">
+                    <div className="space-y-3">
+                      <div>
+                        <h3 className="font-semibold text-lg">{product.nome}</h3>
+                        <p className="text-sm text-muted-foreground">{product.categoria}</p>
+                      </div>
+
+                      {product.beneficios && product.beneficios.length > 0 && (
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Principais benefícios:</p>
+                          <div className="flex gap-1 flex-wrap">
+                            {product.beneficios.slice(0, 3).map((beneficio, index) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {beneficio}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {product.especie_alvo && product.especie_alvo.length > 0 && (
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Espécies:</p>
+                          <div className="flex gap-1 flex-wrap">
+                            {product.especie_alvo.map((especie, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs">
+                                {especie}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {product.preco_por_kg && (
+                        <div className="pt-2 border-t">
+                          <p className="text-lg font-bold text-green-600">
+                            R$ {product.preco_por_kg.toFixed(2)}/kg
+                          </p>
+                        </div>
+                      )}
+
+                      <Button variant="outline" className="w-full">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Adicionar à Receita
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
-              
-              <div className="pt-4 border-t">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Total:</span>
-                  <span className={`font-bold ${
-                    Math.abs(Object.values(ingredientPercentages).reduce((sum, val) => sum + val, 0) - 100) <= 0.1 
-                      ? "text-success" : "text-destructive"
-                  }`}>
-                    {Object.values(ingredientPercentages).reduce((sum, val) => sum + val, 0).toFixed(1)}%
-                  </span>
-                </div>
-              </div>
             </div>
-          </CardContent>
-        </Card>
+          </TabsContent>
+        </Tabs>
 
-        {/* Resultados */}
-        <Card variant={currentFormulation.isValid ? "gradient" : "default"}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              Análise Nutricional
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
+        {/* Modal para Nova Receita */}
+        <Dialog open={isReceitaModalOpen} onOpenChange={setIsReceitaModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nova Receita</DialogTitle>
+              <DialogDescription>
+                Crie uma nova receita veterinária
+              </DialogDescription>
+            </DialogHeader>
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Status da Formulação</span>
-                {currentFormulation.isValid ? (
-                  <Badge variant="default" className="bg-success">
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    Válida
-                  </Badge>
-                ) : (
-                  <Badge variant="destructive">
-                    <AlertCircle className="w-3 h-3 mr-1" />
-                    Ajustar
-                  </Badge>
-                )}
+              <div>
+                <Label htmlFor="nome">Nome da Receita *</Label>
+                <Input
+                  id="nome"
+                  value={newReceita.nome}
+                  onChange={(e) => setNewReceita({...newReceita, nome: e.target.value})}
+                  placeholder="Ex: Protocolo de Engorda - Bovinos"
+                />
               </div>
 
-              {currentFormulation.isValid && (
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Eficiência</span>
-                    <span className="font-medium">{currentFormulation.efficiency.toFixed(0)}%</span>
-                  </div>
-                  <Progress value={currentFormulation.efficiency} className="h-2" />
-                </div>
-              )}
+              <div>
+                <Label htmlFor="animal">Animal (opcional)</Label>
+                <Select value={newReceita.animal_id} onValueChange={(value) => setNewReceita({...newReceita, animal_id: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um animal específico" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {animais.map((animal) => (
+                      <SelectItem key={animal.id} value={animal.id}>
+                        {animal.nome} - {animal.especie}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-              <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-accent/20 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium">Proteína Bruta</p>
-                    <p className="text-xs text-muted-foreground">
-                      Meta: {targetProtein}%
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className={`font-bold ${
-                      Math.abs(currentFormulation.totalProtein - targetProtein) <= 1 
-                        ? "text-success" : "text-destructive"
-                    }`}>
-                      {currentFormulation.totalProtein.toFixed(1)}%
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {currentFormulation.totalProtein > targetProtein ? "+" : ""}
-                      {(currentFormulation.totalProtein - targetProtein).toFixed(1)}
-                    </p>
-                  </div>
-                </div>
+              <div>
+                <Label htmlFor="objetivo">Objetivo *</Label>
+                <Input
+                  id="objetivo"
+                  value={newReceita.objetivo}
+                  onChange={(e) => setNewReceita({...newReceita, objetivo: e.target.value})}
+                  placeholder="Ex: Ganho de peso, tratamento nutricional..."
+                />
+              </div>
 
-                <div className="flex justify-between items-center p-3 bg-tech-blue/10 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium">Energia Metabólica</p>
-                    <p className="text-xs text-muted-foreground">
-                      Meta: {targetEnergy} kcal/kg
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className={`font-bold ${
-                      Math.abs(currentFormulation.totalEnergy - targetEnergy) <= 100 
-                        ? "text-success" : "text-destructive"
-                    }`}>
-                      {currentFormulation.totalEnergy.toFixed(0)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {currentFormulation.totalEnergy > targetEnergy ? "+" : ""}
-                      {(currentFormulation.totalEnergy - targetEnergy).toFixed(0)} kcal/kg
-                    </p>
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="eficiencia">Eficiência Esperada</Label>
+                  <Input
+                    id="eficiencia"
+                    type="number"
+                    step="0.1"
+                    value={newReceita.eficiencia_esperada}
+                    onChange={(e) => setNewReceita({...newReceita, eficiencia_esperada: e.target.value})}
+                    placeholder="Ex: 2.8"
+                  />
                 </div>
-
-                <div className="flex justify-between items-center p-3 bg-warning/10 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium">Custo Estimado</p>
-                    <p className="text-xs text-muted-foreground">
-                      Máximo: R$ {maxCost.toFixed(2)}/kg
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className={`font-bold ${
-                      currentFormulation.totalCost <= maxCost 
-                        ? "text-success" : "text-destructive"
-                    }`}>
-                      R$ {currentFormulation.totalCost.toFixed(2)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {((currentFormulation.totalCost / maxCost - 1) * 100).toFixed(0)}% do limite
-                    </p>
-                  </div>
+                <div>
+                  <Label htmlFor="custo">Custo Estimado (R$)</Label>
+                  <Input
+                    id="custo"
+                    type="number"
+                    step="0.01"
+                    value={newReceita.custo_estimado}
+                    onChange={(e) => setNewReceita({...newReceita, custo_estimado: e.target.value})}
+                    placeholder="Ex: 150.00"
+                  />
                 </div>
               </div>
 
-              {currentFormulation.isValid && (
-                <div className="pt-4 border-t">
-                  <h4 className="font-medium text-sm mb-3">Produtos Recomendados</h4>
-                  <div className="space-y-2">
-                    <div className="p-2 bg-primary/5 rounded border border-primary/20">
-                      <p className="text-sm font-medium">Premix Suínos Plus</p>
-                      <p className="text-xs text-muted-foreground">
-                        Complemento vitamínico ideal para esta formulação
-                      </p>
-                    </div>
-                    <div className="p-2 bg-sustainability/5 rounded border border-sustainability/20">
-                      <p className="text-sm font-medium">Probionutri Digestivo</p>
-                      <p className="text-xs text-muted-foreground">
-                        Melhora conversão alimentar em 5-8%
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <div>
+                <Label htmlFor="observacoes">Observações</Label>
+                <Textarea
+                  id="observacoes"
+                  value={newReceita.observacoes}
+                  onChange={(e) => setNewReceita({...newReceita, observacoes: e.target.value})}
+                  placeholder="Instruções especiais, posologia, cuidados..."
+                />
+              </div>
             </div>
-          </CardContent>
-        </Card>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsReceitaModalOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleCreateReceita} disabled={loading}>
+                Criar Receita
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
