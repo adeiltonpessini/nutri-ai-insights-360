@@ -22,6 +22,7 @@ import Pricing from "./pages/Pricing";
 import VeterinarioArea from "./pages/VeterinarioArea";
 import EmpresaArea from "./pages/EmpresaArea";
 import SuperAdminArea from "./pages/SuperAdminArea";
+import Configuracoes from "./pages/Configuracoes";
 import LandingPage from "./components/LandingPage";
 
 const queryClient = new QueryClient();
@@ -56,7 +57,7 @@ const App = () => (
               <Route path="empresa" element={<EmpresaArea />} />
               <Route path="super-admin" element={<SuperAdminArea />} />
               
-              <Route path="configuracoes" element={<div className="p-6"><h1 className="text-2xl font-bold">Configurações</h1><p className="text-muted-foreground">Em desenvolvimento...</p></div>} />
+              <Route path="configuracoes" element={<Configuracoes />} />
             </Route>
             
             {/* Catch-all route */}
