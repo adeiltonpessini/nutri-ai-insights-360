@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
@@ -15,7 +16,7 @@ interface UserRole {
   id: string;
   user_id: string;
   company_id: string;
-  role: 'super_admin' | 'company_admin' | 'veterinario' | 'cliente';
+  role: 'super_admin' | 'company_admin' | 'veterinario' | 'cliente' | 'tecnico';
   is_active: boolean;
 }
 
