@@ -31,6 +31,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
+interface AnalyticsData {
+  totalProducts: number;
+  activeProducts: number;
+  featuredProducts: number;
+  totalRevenue: number;
+}
+
 export default function EmpresaArea() {
   const { currentCompany } = useCompany();
   const { user } = useAuth();
@@ -40,7 +47,12 @@ export default function EmpresaArea() {
   // Estados para dados
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
-  const [analytics, setAnalytics] = useState({});
+  const [analytics, setAnalytics] = useState<AnalyticsData>({
+    totalProducts: 0,
+    activeProducts: 0,
+    featuredProducts: 0,
+    totalRevenue: 0
+  });
   
   // Estados para formulários
   const [newProduct, setNewProduct] = useState({
@@ -240,10 +252,10 @@ export default function EmpresaArea() {
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{analytics.totalProducts || 0}</div>
+              <div className="text-2xl font-bold">{analytics.totalProducts}</div>
               <div className="flex items-center text-xs text-muted-foreground">
                 <Progress 
-                  value={(analytics.totalProducts || 0) / (currentCompany?.max_products || 50) * 100} 
+                  value={(analytics.totalProducts) / (currentCompany?.max_products || 50) * 100} 
                   className="w-20 h-2 mr-2" 
                 />
                 {currentCompany?.max_products || 50} máximo
@@ -257,7 +269,7 @@ export default function EmpresaArea() {
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{analytics.activeProducts || 0}</div>
+              <div className="text-2xl font-bold">{analytics.activeProducts}</div>
               <p className="text-xs text-muted-foreground">
                 Disponíveis para venda
               </p>
@@ -270,7 +282,7 @@ export default function EmpresaArea() {
               <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{analytics.featuredProducts || 0}</div>
+              <div className="text-2xl font-bold">{analytics.featuredProducts}</div>
               <p className="text-xs text-muted-foreground">
                 Em destaque
               </p>
@@ -284,7 +296,7 @@ export default function EmpresaArea() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                R$ {(analytics.totalRevenue || 0).toLocaleString('pt-BR')}
+                R$ {analytics.totalRevenue.toLocaleString('pt-BR')}
               </div>
               <p className="text-xs text-muted-foreground">
                 Vendas recentes
@@ -490,12 +502,12 @@ export default function EmpresaArea() {
                     </div>
                     <div className="flex justify-between">
                       <span>Receita Total</span>
-                      <span className="font-bold">R$ {(analytics.totalRevenue || 0).toLocaleString('pt-BR')}</span>
+                      <span className="font-bold">R$ {analytics.totalRevenue.toLocaleString('pt-BR')}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Ticket Médio</span>
                       <span className="font-bold">
-                        R$ {orders.length > 0 ? ((analytics.totalRevenue || 0) / orders.length).toFixed(2) : '0.00'}
+                        R$ {orders.length > 0 ? (analytics.totalRevenue / orders.length).toFixed(2) : '0.00'}
                       </span>
                     </div>
                   </div>

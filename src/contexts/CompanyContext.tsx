@@ -10,6 +10,10 @@ interface Company {
   logo_url: string | null;
   description: string | null;
   is_active: boolean;
+  max_animals?: number;
+  max_products?: number;
+  max_users?: number;
+  subscription_plan?: string;
 }
 
 interface UserRole {
