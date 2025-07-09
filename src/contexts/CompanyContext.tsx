@@ -14,6 +14,7 @@ interface Company {
   max_products?: number;
   max_users?: number;
   subscription_plan?: string;
+  company_type?: string;
 }
 
 interface UserRole {

@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CompanyProvider } from './contexts/CompanyContext';
-import LandingPage from './pages/LandingPage';
+import { LandingPage } from './components/LandingPage';
 import Auth from './pages/Auth';
 import Pricing from './pages/Pricing';
 import AcceptInvitation from './pages/AcceptInvitation';
@@ -23,8 +24,8 @@ import NotFound from './pages/NotFound';
 import { Toaster } from "@/components/ui/toaster"
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import OnboardingModal from './components/OnboardingModal';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { OnboardingModal } from './components/OnboardingModal';
 import EmpresaAreaAdvanced from './pages/EmpresaAreaAdvanced';
 
 const queryClient = new QueryClient();

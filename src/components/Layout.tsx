@@ -1,5 +1,4 @@
 
-import { Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { NotificationToast } from "@/components/ui/notification-toast";
@@ -9,7 +8,11 @@ import { useCompany } from "@/contexts/CompanyContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-export function Layout() {
+interface LayoutProps {
+  children: React.ReactNode;
+}
+
+export function Layout({ children }: LayoutProps) {
   const { currentCompany, isLoading } = useCompany();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -51,7 +54,7 @@ export function Layout() {
             </div>
           </header>
           <main className="flex-1 overflow-auto">
-            <Outlet />
+            {children}
           </main>
         </div>
       </div>
