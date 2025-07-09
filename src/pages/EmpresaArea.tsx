@@ -1,46 +1,226 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   Package, 
-  BarChart3, 
-  Users, 
   TrendingUp, 
+  Users, 
+  Star,
   Plus,
   Search,
   Filter,
-  Eye
+  Edit,
+  Eye,
+  BarChart3,
+  Target,
+  Award,
+  ShoppingCart,
+  Truck
 } from "lucide-react";
 import { useCompany } from "@/contexts/CompanyContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 export default function EmpresaArea() {
   const { currentCompany } = useCompany();
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("products");
+  const [loading, setLoading] = useState(false);
+  
+  // Estados para dados
+  const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [analytics, setAnalytics] = useState({});
+  
+  // Estados para formulários
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    description: '',
+    category: '',
+    price: '',
+    unit: '',
+    target_species: [],
+    target_phase: [],
+    composition: {},
+    benefits: []
+  });
+  
+  // Modal states
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
 
-  // Mock data - em produção viria do banco
-  const stats = {
-    totalProducts: 23,
-    maxProducts: 200,
-    activeProducts: 21,
-    totalViews: 1247,
-    monthlyGrowth: 12.5
+  useEffect(() => {
+    if (currentCompany && user) {
+      loadEmpresaData();
+    }
+  }, [currentCompany, user]);
+
+  const loadEmpresaData = async () => {
+    if (!currentCompany || !user) return;
+
+    try {
+      setLoading(true);
+
+      // Carregar produtos da empresa
+      const { data: productsData } = await supabase
+        .from('company_products')
+        .select('*')
+        .eq('company_id', currentCompany.id)
+        .order('created_at', { ascending: false });
+
+      // Simular dados de pedidos (seria de uma tabela de pedidos real)
+      const mockOrders = [
+        {
+          id: '1',
+          client: 'Fazenda São João',
+          product: productsData?.[0]?.name || 'Produto A',
+          quantity: 500,
+          value: 2500,
+          status: 'entregue',
+          date: '2024-01-15'
+        },
+        {
+          id: '2',
+          client: 'Clínica Veterinária XYZ',
+          product: productsData?.[1]?.name || 'Produto B',
+          quantity: 100,
+          value: 800,
+          status: 'processando',
+          date: '2024-01-10'
+        }
+      ];
+
+      setProducts(productsData || []);
+      setOrders(mockOrders);
+
+      // Calcular analytics
+      const totalProducts = productsData?.length || 0;
+      const activeProducts = productsData?.filter(p => p.is_active).length || 0;
+      const featuredProducts = productsData?.filter(p => p.is_featured).length || 0;
+      const totalRevenue = mockOrders.reduce((sum, order) => sum + order.value, 0);
+
+      setAnalytics({
+        totalProducts,
+        activeProducts,
+        featuredProducts,
+        totalRevenue
+      });
+
+    } catch (error) {
+      console.error('Erro ao carregar dados da empresa:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar dados da empresa",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const recentProducts = [
-    { id: 1, name: "Antibiótico Premium", category: "Medicamento", status: "Ativo", views: 45 },
-    { id: 2, name: "Ração Especial Filhotes", category: "Alimento", status: "Ativo", views: 32 },
-    { id: 3, name: "Suplemento Vitamínico", category: "Medicamento", status: "Pendente", views: 18 }
-  ];
+  const handleCreateProduct = async () => {
+    if (!currentCompany || !user || !newProduct.name || !newProduct.category) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios",
+        variant: "destructive"
+      });
+      return;
+    }
 
-  const topPerforming = [
-    { name: "Antibiótico Premium", category: "Medicamento", sales: 156, growth: "+23%" },
-    { name: "Ração Premium Adult", category: "Alimento", sales: 134, growth: "+18%" },
-    { name: "Anti-inflamatório", category: "Medicamento", sales: 98, growth: "+15%" }
-  ];
+    try {
+      setLoading(true);
+
+      const productData = {
+        ...newProduct,
+        company_id: currentCompany.id,
+        price: parseFloat(newProduct.price) || null,
+        target_species: newProduct.target_species,
+        target_phase: newProduct.target_phase,
+        composition: newProduct.composition || {},
+        benefits: newProduct.benefits || []
+      };
+
+      const { error } = await supabase
+        .from('company_products')
+        .insert(productData);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Produto criado com sucesso!"
+      });
+
+      setIsProductModalOpen(false);
+      setNewProduct({
+        name: '',
+        description: '',
+        category: '',
+        price: '',
+        unit: '',
+        target_species: [],
+        target_phase: [],
+        composition: {},
+        benefits: []
+      });
+      loadEmpresaData();
+
+    } catch (error) {
+      console.error('Erro ao criar produto:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao criar produto",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleProductStatus = async (productId, currentStatus) => {
+    try {
+      const { error } = await supabase
+        .from('company_products')
+        .update({ is_active: !currentStatus })
+        .eq('id', productId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: `Produto ${!currentStatus ? 'ativado' : 'desativado'} com sucesso!`
+      });
+
+      loadEmpresaData();
+
+    } catch (error) {
+      console.error('Erro ao atualizar produto:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar produto",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (loading && products.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/50 p-6">
@@ -48,168 +228,246 @@ export default function EmpresaArea() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Área da Empresa</h1>
           <p className="text-muted-foreground">
-            Gerencie seus produtos, analise performance e acompanhe vendas
+            Gerencie seus produtos, vendas e relacionamento com clientes
           </p>
         </div>
 
+        {/* Cards de Estatísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Produtos</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analytics.totalProducts || 0}</div>
+              <div className="flex items-center text-xs text-muted-foreground">
+                <Progress 
+                  value={(analytics.totalProducts || 0) / (currentCompany?.max_products || 50) * 100} 
+                  className="w-20 h-2 mr-2" 
+                />
+                {currentCompany?.max_products || 50} máximo
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Produtos Ativos</CardTitle>
+              <Target className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analytics.activeProducts || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                Disponíveis para venda
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Produtos Destacados</CardTitle>
+              <Star className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analytics.featuredProducts || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                Em destaque
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Receita Estimada</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                R$ {(analytics.totalRevenue || 0).toLocaleString('pt-BR')}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Vendas recentes
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="products">Produtos</TabsTrigger>
+            <TabsTrigger value="orders">Pedidos</TabsTrigger>
+            <TabsTrigger value="clients">Clientes</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="integrations">Integrações</TabsTrigger>
+            <TabsTrigger value="marketing">Marketing</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="dashboard" className="space-y-6">
-            {/* Status Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Produtos Cadastrados</CardTitle>
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalProducts}</div>
-                  <div className="text-xs text-muted-foreground mb-2">
-                    de {stats.maxProducts} permitidos
-                  </div>
-                  <Progress value={(stats.totalProducts / stats.maxProducts) * 100} className="h-2" />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Produtos Ativos</CardTitle>
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.activeProducts}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {((stats.activeProducts / stats.totalProducts) * 100).toFixed(1)}% do total
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Visualizações</CardTitle>
-                  <Eye className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalViews}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Este mês
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Crescimento</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">+{stats.monthlyGrowth}%</div>
-                  <p className="text-xs text-muted-foreground">
-                    vs. mês anterior
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Recent Activity */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Produtos Recentes</CardTitle>
-                  <CardDescription>Últimos produtos cadastrados</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {recentProducts.map((product) => (
-                      <div key={product.id} className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{product.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {product.category}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <Badge variant={product.status === "Ativo" ? "default" : "secondary"}>
-                            {product.status}
-                          </Badge>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {product.views} views
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <Button variant="outline" className="w-full mt-4">
-                    Ver Todos os Produtos
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Top Performance</CardTitle>
-                  <CardDescription>Produtos com melhor desempenho</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {topPerforming.map((product, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{product.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {product.category}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium">{product.sales} vendas</p>
-                          <Badge variant="default" className="text-xs">
-                            {product.growth}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <Button variant="outline" className="w-full mt-4">
-                    Ver Relatório Completo
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
 
           <TabsContent value="products" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Gestão de Produtos</h2>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Cadastrar Produto
-              </Button>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                <input
-                  placeholder="Buscar produtos..."
-                  className="w-full pl-10 pr-4 py-2 border rounded-lg"
-                />
+              <div className="flex gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                  <Input placeholder="Buscar produtos..." className="pl-10 w-64" />
+                </div>
+                <Button variant="outline">
+                  <Filter className="w-4 h-4 mr-2" />
+                  Filtros
+                </Button>
+                <Button onClick={() => setIsProductModalOpen(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Produto
+                </Button>
               </div>
-              <Button variant="outline">
-                <Filter className="w-4 h-4 mr-2" />
-                Filtros
-              </Button>
             </div>
 
+            <div className="grid gap-4">
+              {products.length === 0 ? (
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Nenhum produto cadastrado</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Comece cadastrando seus produtos para que veterinários possam encontrá-los.
+                    </p>
+                    <Button onClick={() => setIsProductModalOpen(true)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Cadastrar Primeiro Produto
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                products.map((product) => (
+                  <Card key={product.id}>
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold text-lg">{product.name}</h3>
+                            {product.is_featured && (
+                              <Badge variant="secondary">
+                                <Star className="w-3 h-3 mr-1" />
+                                Destaque
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-muted-foreground mb-3">{product.description}</p>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                              <p className="text-muted-foreground">Categoria</p>
+                              <p className="font-medium">{product.category}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Preço</p>
+                              <p className="font-medium">
+                                {product.price ? `R$ ${product.price.toFixed(2)}` : 'Não informado'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Unidade</p>
+                              <p className="font-medium">{product.unit}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Estoque</p>
+                              <p className="font-medium">{product.stock_quantity || 'Ilimitado'}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Badge variant={product.is_active ? "default" : "secondary"}>
+                            {product.is_active ? "Ativo" : "Inativo"}
+                          </Badge>
+                          <Button variant="outline" size="sm">
+                            <Eye className="w-4 h-4 mr-2" />
+                            Ver
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <Edit className="w-4 h-4 mr-2" />
+                            Editar
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => toggleProductStatus(product.id, product.is_active)}
+                          >
+                            {product.is_active ? 'Desativar' : 'Ativar'}
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="orders" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Pedidos e Vendas</h2>
+              <div className="flex gap-2">
+                <Button variant="outline">
+                  <Filter className="w-4 h-4 mr-2" />
+                  Filtrar
+                </Button>
+                <Button variant="outline">
+                  <Truck className="w-4 h-4 mr-2" />
+                  Entregas
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              {orders.length === 0 ? (
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <ShoppingCart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Nenhum pedido encontrado</h3>
+                    <p className="text-muted-foreground">
+                      Pedidos de seus produtos aparecerão aqui.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                orders.map((order) => (
+                  <Card key={order.id}>
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-semibold text-lg">{order.client}</h3>
+                          <div className="space-y-1 text-sm text-muted-foreground">
+                            <p>Produto: {order.product}</p>
+                            <p>Quantidade: {order.quantity} unidades</p>
+                            <p>Data: {new Date(order.date).toLocaleDateString('pt-BR')}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-green-600">
+                            R$ {order.value.toLocaleString('pt-BR')}
+                          </p>
+                          <Badge variant={
+                            order.status === 'entregue' ? "default" : 
+                            order.status === 'processando' ? "secondary" : "destructive"
+                          }>
+                            {order.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="clients" className="space-y-6">
+            <h2 className="text-2xl font-bold">Relacionamento com Clientes</h2>
+            
             <Card>
-              <CardContent className="p-6">
-                <p className="text-center text-muted-foreground">
-                  Lista de produtos será implementada aqui
+              <CardContent className="p-6 text-center">
+                <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Sistema de CRM em Desenvolvimento</h3>
+                <p className="text-muted-foreground">
+                  Em breve você poderá gerenciar todos os seus clientes diretamente no sistema.
                 </p>
               </CardContent>
             </Card>
@@ -218,27 +476,156 @@ export default function EmpresaArea() {
           <TabsContent value="analytics" className="space-y-6">
             <h2 className="text-2xl font-bold">Analytics e Relatórios</h2>
             
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-center text-muted-foreground">
-                  Dashboards e relatórios serão implementados aqui
-                </p>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Performance de Vendas</CardTitle>
+                  <CardDescription>Estatísticas dos últimos 30 dias</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <span>Total de Pedidos</span>
+                      <span className="font-bold">{orders.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Receita Total</span>
+                      <span className="font-bold">R$ {(analytics.totalRevenue || 0).toLocaleString('pt-BR')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Ticket Médio</span>
+                      <span className="font-bold">
+                        R$ {orders.length > 0 ? ((analytics.totalRevenue || 0) / orders.length).toFixed(2) : '0.00'}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Produtos Mais Vendidos</CardTitle>
+                  <CardDescription>Top produtos do mês</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {orders.slice(0, 3).map((order, index) => (
+                      <div key={index} className="flex justify-between items-center">
+                        <div>
+                          <p className="font-medium">{order.product}</p>
+                          <p className="text-sm text-muted-foreground">{order.quantity} unidades</p>
+                        </div>
+                        <Badge variant="outline">#{index + 1}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
-          <TabsContent value="integrations" className="space-y-6">
-            <h2 className="text-2xl font-bold">Integrações</h2>
+          <TabsContent value="marketing" className="space-y-6">
+            <h2 className="text-2xl font-bold">Marketing e Promoções</h2>
             
             <Card>
-              <CardContent className="p-6">
-                <p className="text-center text-muted-foreground">
-                  Integrações com veterinários serão implementadas aqui
+              <CardContent className="p-6 text-center">
+                <Award className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Ferramentas de Marketing em Desenvolvimento</h3>
+                <p className="text-muted-foreground">
+                  Em breve você poderá criar campanhas e promoções para seus produtos.
                 </p>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Modal para Novo Produto */}
+        <Dialog open={isProductModalOpen} onOpenChange={setIsProductModalOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Novo Produto</DialogTitle>
+              <DialogDescription>
+                Cadastre um novo produto para seu catálogo
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="name">Nome do Produto *</Label>
+                  <Input
+                    id="name"
+                    value={newProduct.name}
+                    onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                    placeholder="Ex: Ração Super Premium"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="category">Categoria *</Label>
+                  <Select value={newProduct.category} onValueChange={(value) => setNewProduct({...newProduct, category: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a categoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="racao">Ração</SelectItem>
+                      <SelectItem value="medicamento">Medicamento</SelectItem>
+                      <SelectItem value="suplemento">Suplemento</SelectItem>
+                      <SelectItem value="vacina">Vacina</SelectItem>
+                      <SelectItem value="equipamento">Equipamento</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="description">Descrição</Label>
+                <Textarea
+                  id="description"
+                  value={newProduct.description}
+                  onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                  placeholder="Descreva as características e benefícios do produto"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="price">Preço (R$)</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    step="0.01"
+                    value={newProduct.price}
+                    onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="unit">Unidade</Label>
+                  <Select value={newProduct.unit} onValueChange={(value) => setNewProduct({...newProduct, unit: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a unidade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="kg">Quilograma (kg)</SelectItem>
+                      <SelectItem value="saco_25kg">Saco 25kg</SelectItem>
+                      <SelectItem value="litro">Litro (L)</SelectItem>
+                      <SelectItem value="unidade">Unidade</SelectItem>
+                      <SelectItem value="caixa">Caixa</SelectItem>
+                      <SelectItem value="frasco">Frasco</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsProductModalOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleCreateProduct} disabled={loading}>
+                Cadastrar Produto
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

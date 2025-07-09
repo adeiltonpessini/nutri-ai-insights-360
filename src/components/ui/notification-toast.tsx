@@ -1,105 +1,47 @@
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Bell, X, AlertTriangle, CheckCircle, Info, TrendingUp } from "lucide-react";
 
-interface Notification {
-  id: string;
-  type: 'success' | 'warning' | 'info' | 'performance';
-  title: string;
-  message: string;
-  timestamp: Date;
-  read: boolean;
-  action?: {
-    label: string;
-    href: string;
-  };
-}
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Bell, X, AlertTriangle, CheckCircle, Info, TrendingUp, AlertCircle } from "lucide-react";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface NotificationToastProps {
   className?: string;
 }
 
 export function NotificationToast({ className }: NotificationToastProps) {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'warning',
-      title: 'Conversão alimentar em queda',
-      message: 'Lote Fazenda São João apresentou redução de 8% na conversão',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      read: false,
-      action: {
-        label: 'Ver detalhes',
-        href: '/diagnostico'
-      }
-    },
-    {
-      id: '2',
-      type: 'success',
-      title: 'Formulação otimizada',
-      message: 'Nova formulação para crescimento aprovada e ativa',
-      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-      read: false,
-      action: {
-        label: 'Ver formulação',
-        href: '/simulador'
-      }
-    },
-    {
-      id: '3',
-      type: 'info',
-      title: 'Relatório mensal disponível',
-      message: 'Relatório de sustentabilidade de Dezembro foi gerado',
-      timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000),
-      read: true
-    },
-    {
-      id: '4',
-      type: 'performance',
-      title: 'Meta de eficiência atingida',
-      message: 'Propriedade Santa Clara alcançou 95% de eficiência',
-      timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000),
-      read: true
-    }
-  ]);
-
+  const { 
+    notifications, 
+    loading, 
+    markAsRead, 
+    markAllAsRead, 
+    removeNotification 
+  } = useNotifications();
+  
   const [isOpen, setIsOpen] = useState(false);
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => prev.map(n => 
-      n.id === id ? { ...n, read: true } : n
-    ));
-  };
-
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  };
-
-  const removeNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-  };
-
-  const getIcon = (type: Notification['type']) => {
+  const getIcon = (type: string) => {
     switch (type) {
       case 'success':
-        return <CheckCircle className="w-4 h-4 text-success" />;
+        return <CheckCircle className="w-4 h-4 text-green-600" />;
       case 'warning':
-        return <AlertTriangle className="w-4 h-4 text-warning" />;
+        return <AlertTriangle className="w-4 h-4 text-orange-600" />;
       case 'performance':
-        return <TrendingUp className="w-4 h-4 text-tech-blue" />;
+        return <TrendingUp className="w-4 h-4 text-blue-600" />;
+      case 'alert':
+        return <AlertCircle className="w-4 h-4 text-red-600" />;
       default:
-        return <Info className="w-4 h-4 text-primary" />;
+        return <Info className="w-4 h-4 text-blue-600" />;
     }
   };
 
-  const getBadgeVariant = (type: Notification['type']) => {
+  const getBadgeVariant = (type: string) => {
     switch (type) {
       case 'success':
         return 'default';
       case 'warning':
+      case 'alert':
         return 'destructive';
       case 'performance':
         return 'secondary';
@@ -110,46 +52,27 @@ export function NotificationToast({ className }: NotificationToastProps) {
 
   const formatTimeAgo = (date: Date) => {
     const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
     
-    if (diffInHours < 1) return 'Agora mesmo';
-    if (diffInHours === 1) return 'há 1 hora';
-    if (diffInHours < 24) return `há ${diffInHours} horas`;
+    if (diffInMinutes < 1) return 'Agora mesmo';
+    if (diffInMinutes < 60) return `há ${diffInMinutes} min`;
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `há ${diffInHours}h`;
+    
     const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays === 1) return 'há 1 dia';
-    return `há ${diffInDays} dias`;
+    return `há ${diffInDays}d`;
   };
 
-  useEffect(() => {
-    // Simular novas notificações
-    const interval = setInterval(() => {
-      const randomNotifications = [
-        {
-          id: Date.now().toString(),
-          type: 'info' as const,
-          title: 'Lote atualizado',
-          message: 'Dados de peso médio atualizados automaticamente',
-          timestamp: new Date(),
-          read: false
-        },
-        {
-          id: (Date.now() + 1).toString(),
-          type: 'performance' as const,
-          title: 'Melhoria detectada',
-          message: 'Conversão alimentar melhorou 3% na última semana',
-          timestamp: new Date(),
-          read: false
-        }
-      ];
-
-      if (Math.random() > 0.7) {
-        const newNotification = randomNotifications[Math.floor(Math.random() * randomNotifications.length)];
-        setNotifications(prev => [newNotification, ...prev.slice(0, 9)]);
-      }
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
+  if (loading) {
+    return (
+      <div className={`relative ${className}`}>
+        <Button variant="ghost" size="sm" className="relative hover:bg-accent/50">
+          <Bell className="w-5 h-5" />
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className={`relative ${className}`}>
@@ -163,7 +86,7 @@ export function NotificationToast({ className }: NotificationToastProps) {
         {unreadCount > 0 && (
           <Badge 
             variant="destructive" 
-            className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs flex items-center justify-center animate-pulse-glow"
+            className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs flex items-center justify-center animate-pulse"
           >
             {unreadCount > 9 ? '9+' : unreadCount}
           </Badge>
@@ -171,8 +94,8 @@ export function NotificationToast({ className }: NotificationToastProps) {
       </Button>
 
       {isOpen && (
-        <Card className="absolute right-0 top-12 w-80 max-h-96 overflow-hidden z-50 shadow-strong animate-scale-in">
-          <div className="p-4 border-b bg-gradient-primary text-primary-foreground">
+        <Card className="absolute right-0 top-12 w-80 max-h-96 overflow-hidden z-50 shadow-lg animate-in slide-in-from-top-2">
+          <div className="p-4 border-b bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Notificações</h3>
               <div className="flex items-center gap-2">
@@ -209,7 +132,7 @@ export function NotificationToast({ className }: NotificationToastProps) {
                 {notifications.map((notification) => (
                   <div 
                     key={notification.id}
-                    className={`p-4 hover:bg-accent/30 transition-smooth cursor-pointer ${
+                    className={`p-4 hover:bg-accent/30 transition-colors cursor-pointer ${
                       !notification.read ? 'bg-primary/5 border-l-2 border-l-primary' : ''
                     }`}
                     onClick={() => markAsRead(notification.id)}
