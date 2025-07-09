@@ -8,6 +8,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
+interface InvitationResponse {
+  success: boolean;
+  error?: string;
+  company_id?: string;
+}
+
 export default function AcceptInvitation() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -79,14 +85,17 @@ export default function AcceptInvitation() {
 
       if (error) throw error;
 
-      if (data.success) {
+      // Type assertion to properly handle the JSON response
+      const response = data as InvitationResponse;
+
+      if (response.success) {
         toast({
           title: "Convite aceito!",
           description: "Você foi adicionado à equipe com sucesso."
         });
         navigate('/dashboard');
       } else {
-        throw new Error(data.error || 'Erro ao aceitar convite');
+        throw new Error(response.error || 'Erro ao aceitar convite');
       }
     } catch (error) {
       console.error('Error accepting invitation:', error);
