@@ -36,7 +36,8 @@ export function useSubscription() {
         return;
       }
 
-      setSubscription(data);
+      // Cast the data to UserSubscription type to ensure status compatibility
+      setSubscription(data as UserSubscription);
     } catch (error) {
       console.error('Error loading subscription:', error);
       setSubscription(null);
