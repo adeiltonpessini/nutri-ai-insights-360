@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -91,7 +90,7 @@ export default function SuperAdminArea() {
         .select('role')
         .eq('user_id', user.id)
         .eq('role', 'super_admin')
-        .single();
+        .maybeSingle();
 
       if (!userRole) {
         toast({
@@ -364,7 +363,7 @@ export default function SuperAdminArea() {
                           Usuário: {subscription.user_id}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Termina em: {new Date(subscription.current_period_end).toLocaleDateString('pt-BR')}
+                          Termina em: {subscription.current_period_end ? new Date(subscription.current_period_end).toLocaleDateString('pt-BR') : 'N/A'}
                         </p>
                       </div>
                       <Badge variant={subscription.status === 'active' ? "default" : "secondary"}>

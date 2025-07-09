@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,7 +33,7 @@ export default function Pricing() {
         .select('plan_id')
         .eq('user_id', user.id)
         .eq('status', 'active')
-        .single();
+        .maybeSingle();
 
       if (data) {
         setCurrentPlan(data.plan_id);
@@ -52,23 +51,10 @@ export default function Pricing() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { 
-          planId: plan.id,
-          priceId: plan.stripePriceId,
-          interval: billingInterval
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.url) {
-        window.open(data.url, '_blank');
-      }
-
+      // Mock checkout process - in real implementation, this would call Stripe
       toast({
-        title: "Redirecionando para checkout",
-        description: "Você será redirecionado para o Stripe para completar o pagamento."
+        title: "Funcionalidade em desenvolvimento",
+        description: "O sistema de pagamento será implementado em breve."
       });
     } catch (error) {
       console.error('Error creating checkout:', error);

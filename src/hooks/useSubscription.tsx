@@ -28,15 +28,18 @@ export function useSubscription() {
         .select('*')
         .eq('user_id', user.id)
         .eq('status', 'active')
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
+      if (error) {
+        console.error('Error loading subscription:', error);
+        setSubscription(null);
+        return;
       }
 
       setSubscription(data);
     } catch (error) {
       console.error('Error loading subscription:', error);
+      setSubscription(null);
     } finally {
       setLoading(false);
     }
