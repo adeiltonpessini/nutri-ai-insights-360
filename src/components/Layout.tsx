@@ -7,6 +7,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { OrganizationSelector } from "@/components/OrganizationSelector";
+import { Sparkles } from "lucide-react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -30,16 +31,19 @@ export function Layout({ children }: LayoutProps) {
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col">
-          <header className="h-14 flex items-center justify-between px-6 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
+          <header className="h-16 flex items-center justify-between px-6 border-b bg-gradient-to-r from-background to-muted/30 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40 shadow-soft">
             <div className="flex items-center gap-4">
               <SidebarTrigger />
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-primary to-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">IV</span>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow">
+                  <Sparkles className="w-6 h-6 text-white" />
                 </div>
-                <h1 className="font-bold text-xl bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-                  InfinityVet
-                </h1>
+                <div>
+                  <h1 className="font-bold text-xl bg-gradient-to-r from-primary to-sustainability bg-clip-text text-transparent">
+                    InfinityVet
+                  </h1>
+                  <p className="text-xs text-muted-foreground -mt-1">Gestão inteligente</p>
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-4">

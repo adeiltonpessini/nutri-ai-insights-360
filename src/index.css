@@ -8,68 +8,68 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Base colors - Agricultural tech theme */
+    /* InfinityVet Brand Colors - HSL Format */
     --background: 0 0% 100%;
-    --foreground: 160 15% 8%;
+    --foreground: 0 0% 29%;
 
     --card: 0 0% 100%;
-    --card-foreground: 160 15% 8%;
+    --card-foreground: 0 0% 29%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 160 15% 8%;
+    --popover-foreground: 0 0% 29%;
 
-    /* Primary - Fresh green for agriculture */
-    --primary: 142 76% 36%;
+    /* Primary - Azul Infinity */
+    --primary: 217 91% 59%;
     --primary-foreground: 0 0% 98%;
-    --primary-light: 142 60% 50%;
-    --primary-dark: 142 80% 25%;
+    --primary-light: 217 91% 70%;
+    --primary-dark: 217 91% 45%;
 
-    /* Secondary - Technology blue */
-    --secondary: 210 100% 96%;
-    --secondary-foreground: 160 15% 8%;
+    /* Secondary - Cinza Neutro */
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 29%;
 
-    --muted: 148 20% 95%;
-    --muted-foreground: 160 10% 45%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    /* Accent - Vibrant agriculture green */
-    --accent: 142 60% 92%;
-    --accent-foreground: 142 80% 25%;
+    /* Accent - Verde Vital */
+    --accent: 142 71% 45%;
+    --accent-foreground: 0 0% 98%;
 
-    /* Tech blue for innovation features */
-    --tech-blue: 210 100% 50%;
+    /* Tech blue - Azul Infinity variants */
+    --tech-blue: 217 91% 59%;
     --tech-blue-foreground: 0 0% 98%;
-    --tech-blue-light: 210 100% 60%;
+    --tech-blue-light: 217 91% 70%;
 
-    /* Sustainability green */
-    --sustainability: 120 60% 40%;
+    /* Sustainability - Verde Vital */
+    --sustainability: 142 71% 45%;
     --sustainability-foreground: 0 0% 98%;
-    --sustainability-light: 120 45% 55%;
+    --sustainability-light: 142 71% 55%;
 
     /* Warning and success states */
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 98%;
-    --success: 142 76% 36%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 98%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 148 20% 88%;
-    --input: 148 20% 88%;
-    --ring: 142 76% 36%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 217 91% 59%;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-light)));
-    --gradient-tech: linear-gradient(135deg, hsl(var(--tech-blue)), hsl(var(--tech-blue-light)));
-    --gradient-sustainability: linear-gradient(135deg, hsl(var(--sustainability)), hsl(var(--sustainability-light)));
-    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--tech-blue)) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(148 20% 98%) 100%);
+    /* InfinityVet Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 59%), hsl(217 91% 70%));
+    --gradient-tech: linear-gradient(135deg, hsl(217 91% 59%), hsl(217 91% 70%));
+    --gradient-sustainability: linear-gradient(135deg, hsl(142 71% 45%), hsl(142 71% 55%));
+    --gradient-hero: linear-gradient(135deg, hsl(217 91% 59%) 0%, hsl(142 71% 45%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(0 0% 98%) 100%);
 
     /* Shadows */
-    --shadow-soft: 0 4px 20px -2px hsl(var(--primary) / 0.1);
-    --shadow-medium: 0 8px 30px -6px hsl(var(--primary) / 0.15);
-    --shadow-strong: 0 20px 40px -10px hsl(var(--primary) / 0.2);
-    --shadow-glow: 0 0 30px hsl(var(--primary) / 0.3);
+    --shadow-soft: 0 4px 20px -2px hsl(217 91% 59% / 0.1);
+    --shadow-medium: 0 8px 30px -6px hsl(217 91% 59% / 0.15);
+    --shadow-strong: 0 20px 40px -10px hsl(217 91% 59% / 0.2);
+    --shadow-glow: 0 0 30px hsl(217 91% 59% / 0.3);
 
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -139,6 +139,10 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-body;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
   }
 }

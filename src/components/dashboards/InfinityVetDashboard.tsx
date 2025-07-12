@@ -100,21 +100,32 @@ export function DashboardHeader() {
   };
 
   return (
-    <div className="mb-8">
-      <div className="flex items-center gap-3 mb-2">
-        {currentOrg && getOrgIcon(currentOrg.company_type)}
-        <h1 className="text-3xl font-bold">
-          {currentOrg?.name || 'InfinityVet'}
-        </h1>
-        {currentOrg && (
-          <Badge variant="secondary">
-            {getOrgTypeLabel(currentOrg.company_type)}
-          </Badge>
-        )}
+    <div className="mb-8 p-6 bg-gradient-card rounded-2xl border border-border/50 shadow-medium">
+      <div className="flex items-center gap-4 mb-4">
+        <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center shadow-soft">
+          {currentOrg && getOrgIcon(currentOrg.company_type)}
+        </div>
+        <div className="flex-1">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-sustainability bg-clip-text text-transparent">
+            {currentOrg?.name || 'InfinityVet'}
+          </h1>
+          <div className="flex items-center gap-2 mt-1">
+            {currentOrg && (
+              <Badge className="bg-gradient-sustainability text-white border-0">
+                {getOrgTypeLabel(currentOrg.company_type)}
+              </Badge>
+            )}
+            {currentOrg && (
+              <Badge variant="outline" className="border-primary text-primary">
+                Plano {currentOrg.subscription_plan?.toUpperCase()}
+              </Badge>
+            )}
+          </div>
+        </div>
       </div>
-      <p className="text-muted-foreground">
-        Bem-vindo, {userProfile?.nome}! 
-        {currentOrg && ` Plano ${currentOrg.subscription_plan?.toUpperCase()}`}
+      <p className="text-muted-foreground text-lg">
+        Bem-vindo, <span className="font-semibold text-foreground">{userProfile?.nome}</span>! 
+        Gestão inteligente, sustentável e sem limites.
       </p>
     </div>
   );
