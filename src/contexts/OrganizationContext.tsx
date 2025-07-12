@@ -3,18 +3,18 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 
-export type OrganizationType = 'vet' | 'empresa' | 'fazenda';
-export type OrganizationPlan = 'free' | 'pro' | 'enterprise';
-export type UserRole = 'admin' | 'vet' | 'colaborador' | 'empresa_admin' | 'fazendeiro' | 'super_admin';
+export type OrganizationType = 'veterinario' | 'empresa_alimento' | 'empresa_medicamento' | 'geral';
+export type OrganizationPlan = 'basico' | 'profissional' | 'enterprise';
+export type UserRoleType = 'super_admin' | 'company_admin' | 'veterinario' | 'cliente' | 'tecnico';
 
 interface Organization {
   id: string;
   name: string;
-  type: OrganizationType;
-  plan: OrganizationPlan;
-  limite_animais: number;
-  limite_funcionarios: number;
-  limite_produtos: number;
+  company_type: OrganizationType | null;
+  subscription_plan: OrganizationPlan | null;
+  max_animals: number | null;
+  max_users: number | null;
+  max_products: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -22,16 +22,23 @@ interface Organization {
 interface UserProfile {
   id: string;
   user_id: string;
-  org_id: string | null;
-  role: UserRole;
   nome: string;
-  email: string;
+  empresa: string | null;
   avatar_url: string | null;
+  company_id: string | null;
+}
+
+interface UserRoleData {
+  user_id: string;
+  company_id: string | null;
+  role: UserRoleType;
+  is_active: boolean | null;
 }
 
 interface OrganizationContextType {
   currentOrg: Organization | null;
   userProfile: UserProfile | null;
+  userRole: UserRoleData | null;
   organizations: Organization[];
   setCurrentOrg: (org: Organization) => void;
   isLoading: boolean;
@@ -50,6 +57,7 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
   const { user } = useAuth();
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userRole, setUserRole] = useState<UserRoleData | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -72,7 +80,7 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
 
       // Carregar perfil do usuário
       const { data: profile } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();
@@ -80,32 +88,44 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
       if (profile) {
         setUserProfile(profile);
 
-        // Se é super admin, carregar todas as organizações
-        if (profile.role === 'super_admin') {
-          const { data: allOrgs } = await supabase
-            .from('organizations')
-            .select('*')
-            .order('created_at', { ascending: false });
+        // Carregar role do usuário
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .single();
 
-          if (allOrgs) {
-            setOrganizations(allOrgs);
-            
-            // Definir org atual (salva no localStorage ou primeira encontrada)
-            const savedOrgId = localStorage.getItem('current_org_id');
-            const savedOrg = allOrgs.find(o => o.id === savedOrgId);
-            setCurrentOrg(savedOrg || allOrgs[0]);
-          }
-        } else if (profile.org_id) {
-          // Carregar apenas a organização do usuário
-          const { data: userOrg } = await supabase
-            .from('organizations')
-            .select('*')
-            .eq('id', profile.org_id)
-            .single();
+        if (roleData) {
+          setUserRole(roleData);
 
-          if (userOrg) {
-            setCurrentOrg(userOrg);
-            setOrganizations([userOrg]);
+          // Se é super admin, carregar todas as empresas
+          if (roleData.role === 'super_admin') {
+            const { data: allOrgs } = await supabase
+              .from('companies')
+              .select('*')
+              .order('created_at', { ascending: false });
+
+            if (allOrgs) {
+              setOrganizations(allOrgs);
+              
+              // Definir org atual (salva no localStorage ou primeira encontrada)
+              const savedOrgId = localStorage.getItem('current_org_id');
+              const savedOrg = allOrgs.find(o => o.id === savedOrgId);
+              setCurrentOrg(savedOrg || allOrgs[0]);
+            }
+          } else if (profile.company_id) {
+            // Carregar apenas a empresa do usuário
+            const { data: userOrg } = await supabase
+              .from('companies')
+              .select('*')
+              .eq('id', profile.company_id)
+              .single();
+
+            if (userOrg) {
+              setCurrentOrg(userOrg);
+              setOrganizations([userOrg]);
+            }
           }
         }
       }
@@ -126,16 +146,17 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
   };
 
   // Computed properties
-  const isSuperAdmin = userProfile?.role === 'super_admin';
-  const isAdmin = userProfile?.role === 'admin' || isSuperAdmin;
-  const isVet = userProfile?.role === 'vet' || isAdmin;
-  const canManageAnimals = isVet || userProfile?.role === 'fazendeiro';
-  const canManageProducts = userProfile?.role === 'empresa_admin' || isAdmin;
+  const isSuperAdmin = userRole?.role === 'super_admin';
+  const isAdmin = userRole?.role === 'company_admin' || isSuperAdmin;
+  const isVet = userRole?.role === 'veterinario' || isAdmin;
+  const canManageAnimals = isVet || userRole?.role === 'cliente';
+  const canManageProducts = userRole?.role === 'company_admin' || isAdmin;
   const canManageUsers = isAdmin;
 
   const value = {
     currentOrg,
     userProfile,
+    userRole,
     organizations,
     setCurrentOrg: handleSetCurrentOrg,
     isLoading,

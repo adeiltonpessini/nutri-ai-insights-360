@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,87 +16,78 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface SuperAdminStats {
   totalOrganizations: number;
+  vetOrganizations: number;
+  companyOrganizations: number;
+  farmOrganizations: number;
   totalUsers: number;
-  activeUsers: number;
-  monthlyRevenue: number;
-  organizationsByType: any[];
-  organizationsByPlan: any[];
-  growthData: any[];
-  recentSignups: any[];
 }
 
 export function SuperAdminDashboard() {
   const [stats, setStats] = useState<SuperAdminStats | null>(null);
+  const [planData, setPlanData] = useState<Record<string, number>>({});
+  const [growthData, setGrowthData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const loadSuperAdminData = async () => {
+      try {
+        const [orgsRes, usersRes] = await Promise.all([
+          supabase.from('companies').select('*'),
+          supabase.from('profiles').select('*')
+        ]);
+
+        if (orgsRes.data) {
+          const vetOrgs = orgsRes.data.filter(org => org.company_type === 'veterinario').length;
+          const companyOrgs = orgsRes.data.filter(org => 
+            org.company_type === 'empresa_alimento' || org.company_type === 'empresa_medicamento'
+          ).length;
+          const farmOrgs = orgsRes.data.filter(org => org.company_type === 'geral').length;
+
+          setStats({
+            totalOrganizations: orgsRes.data.length,
+            vetOrganizations: vetOrgs,
+            companyOrganizations: companyOrgs,
+            farmOrganizations: farmOrgs,
+            totalUsers: usersRes.data?.length || 0
+          });
+
+          const planDistribution = orgsRes.data.reduce((acc, org) => {
+            const plan = org.subscription_plan || 'basico';
+            acc[plan] = (acc[plan] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>);
+
+          setPlanData(planDistribution);
+
+          // Calcular crescimento mensal (últimos 6 meses)
+          const sixMonthsAgo = new Date();
+          sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+          const monthlyGrowth = orgsRes.data
+            .filter(org => new Date(org.created_at) >= sixMonthsAgo)
+            .reduce((acc, org) => {
+              const month = new Date(org.created_at).toLocaleDateString('pt-BR', { 
+                month: 'short', 
+                year: 'numeric' 
+              });
+              acc[month] = (acc[month] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>);
+
+          setGrowthData(Object.entries(monthlyGrowth).map(([month, count]) => ({
+            month,
+            organizations: count
+          })));
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados super admin:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadSuperAdminData();
   }, []);
-
-  const loadSuperAdminData = async () => {
-    try {
-      setLoading(true);
-
-      // Carregar dados do super admin
-      const [orgsRes, usersRes] = await Promise.all([
-        supabase.from('organizations').select('*'),
-        supabase.from('user_profiles').select('*')
-      ]);
-
-      const organizations = orgsRes.data || [];
-      const users = usersRes.data || [];
-
-      // Estatísticas por tipo de organização
-      const orgsByType = organizations.reduce((acc: any, org) => {
-        acc[org.type] = (acc[org.type] || 0) + 1;
-        return acc;
-      }, {});
-
-      const organizationsByType = Object.entries(orgsByType).map(([type, count]) => ({
-        name: type === 'vet' ? 'Clínicas' : type === 'empresa' ? 'Empresas' : 'Fazendas',
-        value: count,
-        color: type === 'vet' ? '#8884d8' : type === 'empresa' ? '#82ca9d' : '#ffc658'
-      }));
-
-      // Estatísticas por plano
-      const orgsByPlan = organizations.reduce((acc: any, org) => {
-        acc[org.plan] = (acc[org.plan] || 0) + 1;
-        return acc;
-      }, {});
-
-      const organizationsByPlan = Object.entries(orgsByPlan).map(([plan, count]) => ({
-        name: plan.toUpperCase(),
-        value: count,
-        color: plan === 'free' ? '#ff7300' : plan === 'pro' ? '#00ff00' : '#0088fe'
-      }));
-
-      // Dados de crescimento mockados (implementar com dados reais)
-      const growthData = [
-        { month: 'Jan', organizations: 12, users: 45 },
-        { month: 'Fev', organizations: 18, users: 68 },
-        { month: 'Mar', organizations: 25, users: 89 },
-        { month: 'Abr', organizations: 32, users: 124 },
-        { month: 'Mai', organizations: 41, users: 156 },
-        { month: 'Jun', organizations: organizations.length, users: users.length }
-      ];
-
-      setStats({
-        totalOrganizations: organizations.length,
-        totalUsers: users.length,
-        activeUsers: users.filter(u => new Date(u.created_at).getMonth() === new Date().getMonth()).length,
-        monthlyRevenue: organizations.length * 99.90, // Cálculo simplificado
-        organizationsByType,
-        organizationsByPlan,
-        growthData,
-        recentSignups: users.slice(-5).reverse()
-      });
-
-    } catch (error) {
-      console.error('Erro ao carregar dados do super admin:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -108,6 +98,18 @@ export function SuperAdminDashboard() {
   }
 
   if (!stats) return null;
+
+  const organizationsByType = [
+    { name: 'Clínicas', value: stats.vetOrganizations, color: '#8884d8' },
+    { name: 'Empresas', value: stats.companyOrganizations, color: '#82ca9d' },
+    { name: 'Fazendas', value: stats.farmOrganizations, color: '#ffc658' }
+  ];
+
+  const organizationsByPlan = Object.entries(planData).map(([plan, count]) => ({
+    name: plan.toUpperCase(),
+    value: count,
+    color: plan === 'basico' ? '#ff7300' : plan === 'profissional' ? '#00ff00' : '#0088fe'
+  }));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/50 p-6">
@@ -139,20 +141,18 @@ export function SuperAdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalUsers}</div>
-              <p className="text-xs text-muted-foreground">{stats.activeUsers} novos este mês</p>
+              <p className="text-xs text-muted-foreground">Usuários cadastrados</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Receita Mensal</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Clínicas Veterinárias</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                R$ {stats.monthlyRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </div>
-              <p className="text-xs text-muted-foreground">+18% vs mês anterior</p>
+              <div className="text-2xl font-bold">{stats.vetOrganizations}</div>
+              <p className="text-xs text-muted-foreground">Clínicas ativas</p>
             </CardContent>
           </Card>
 
@@ -173,11 +173,11 @@ export function SuperAdminDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Crescimento da Plataforma</CardTitle>
-              <CardDescription>Organizações e usuários ao longo do tempo</CardDescription>
+              <CardDescription>Organizações ao longo do tempo</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={stats.growthData}>
+                <LineChart data={growthData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
@@ -188,13 +188,6 @@ export function SuperAdminDashboard() {
                     stroke="#8884d8" 
                     strokeWidth={2}
                     name="Organizações"
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="users" 
-                    stroke="#82ca9d" 
-                    strokeWidth={2}
-                    name="Usuários"
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -211,14 +204,14 @@ export function SuperAdminDashboard() {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={stats.organizationsByType}
+                    data={organizationsByType}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
                     outerRadius={120}
                     dataKey="value"
                   >
-                    {stats.organizationsByType.map((entry, index) => (
+                    {organizationsByType.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -226,7 +219,7 @@ export function SuperAdminDashboard() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="flex flex-wrap gap-2 mt-4">
-                {stats.organizationsByType.map((entry, index) => (
+                {organizationsByType.map((entry, index) => (
                   <Badge key={index} variant="outline" className="gap-1">
                     <div 
                       className="w-2 h-2 rounded-full" 
@@ -249,7 +242,7 @@ export function SuperAdminDashboard() {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={stats.organizationsByPlan}>
+                <BarChart data={organizationsByPlan}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
@@ -260,31 +253,37 @@ export function SuperAdminDashboard() {
             </CardContent>
           </Card>
 
-          {/* Cadastros recentes */}
+          {/* Resumo de métricas */}
           <Card>
             <CardHeader>
-              <CardTitle>Cadastros Recentes</CardTitle>
-              <CardDescription>Últimos usuários cadastrados</CardDescription>
+              <CardTitle>Resumo Geral</CardTitle>
+              <CardDescription>Principais métricas do sistema</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {stats.recentSignups.map((user, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 rounded-lg border">
-                    <div className="flex items-center gap-3">
-                      <Activity className="w-4 h-4 text-primary" />
-                      <div>
-                        <p className="font-medium">{user.nome}</p>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <Badge variant="outline">{user.role}</Badge>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(user.created_at).toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <div className="flex items-center gap-3">
+                    <Building2 className="w-4 h-4 text-primary" />
+                    <span>Total de Organizações</span>
                   </div>
-                ))}
+                  <Badge variant="outline">{stats.totalOrganizations}</Badge>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <div className="flex items-center gap-3">
+                    <Users className="w-4 h-4 text-primary" />
+                    <span>Usuários Ativos</span>
+                  </div>
+                  <Badge variant="outline">{stats.totalUsers}</Badge>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <div className="flex items-center gap-3">
+                    <Activity className="w-4 h-4 text-primary" />
+                    <span>Clínicas Veterinárias</span>
+                  </div>
+                  <Badge variant="outline">{stats.vetOrganizations}</Badge>
+                </div>
               </div>
             </CardContent>
           </Card>

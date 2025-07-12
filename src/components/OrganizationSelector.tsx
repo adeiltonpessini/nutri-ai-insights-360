@@ -71,7 +71,7 @@ export function OrganizationSelector() {
                     <div>
                       <span className="block">{org.name}</span>
                       <span className="text-xs text-muted-foreground">
-                        {org.type} - {org.plan}
+                        {org.company_type || 'Geral'} - {org.subscription_plan || 'Básico'}
                       </span>
                     </div>
                   </div>

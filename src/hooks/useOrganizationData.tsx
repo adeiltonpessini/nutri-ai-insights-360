@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 
-interface DashboardStats {
+export interface DashboardStats {
   totalAnimals: number;
   totalProducts: number;
   totalEmployees: number;
@@ -12,19 +12,19 @@ interface DashboardStats {
   alerts: any[];
 }
 
-interface VetStats extends DashboardStats {
+export interface VetStats extends DashboardStats {
   totalDiagnostics: number;
   totalPrescriptions: number;
   lowStockItems: number;
 }
 
-interface CompanyStats extends DashboardStats {
+export interface CompanyStats extends DashboardStats {
   totalIndications: number;
   topVeterinarians: any[];
   topProducts: any[];
 }
 
-interface FarmStats extends DashboardStats {
+export interface FarmStats extends DashboardStats {
   totalLots: number;
   totalVaccinations: number;
   avgWeight: number;
@@ -37,10 +37,10 @@ export function useOrganizationData() {
   const [stats, setStats] = useState<VetStats | CompanyStats | FarmStats | null>(null);
 
   useEffect(() => {
-    if (currentOrg && userProfile) {
+    if (currentOrg) {
       loadData();
     }
-  }, [currentOrg, userProfile]);
+  }, [currentOrg]);
 
   const loadData = async () => {
     if (!currentOrg) return;
@@ -48,14 +48,15 @@ export function useOrganizationData() {
     try {
       setLoading(true);
 
-      switch (currentOrg.type) {
-        case 'vet':
+      switch (currentOrg.company_type) {
+        case 'veterinario':
           await loadVetData();
           break;
-        case 'empresa':
+        case 'empresa_alimento':
+        case 'empresa_medicamento':
           await loadCompanyData();
           break;
-        case 'fazenda':
+        default:
           await loadFarmData();
           break;
       }
@@ -75,16 +76,16 @@ export function useOrganizationData() {
       stockRes,
       employeesRes
     ] = await Promise.all([
-      supabase.from('animais').select('id').eq('org_id', currentOrg!.id),
-      supabase.from('diagnosticos').select('id').eq('org_id', currentOrg!.id),
-      supabase.from('receitas').select('id').eq('org_id', currentOrg!.id),
-      supabase.from('produtos').select('id').eq('org_id', currentOrg!.id).eq('ativo', true),
-      supabase.from('estoque_clinica').select('*').eq('org_id', currentOrg!.id),
-      supabase.from('user_profiles').select('id').eq('org_id', currentOrg!.id)
+      supabase.from('animais').select('id').eq('company_id', currentOrg!.id),
+      supabase.from('diagnosticos').select('id').eq('company_id', currentOrg!.id),
+      supabase.from('receitas').select('id').eq('company_id', currentOrg!.id),
+      supabase.from('catalog_products').select('id').eq('company_id', currentOrg!.id).eq('ativo', true),
+      supabase.from('estoque_insumos').select('*').eq('company_id', currentOrg!.id),
+      supabase.from('profiles').select('id').eq('company_id', currentOrg!.id)
     ]);
 
     const lowStockItems = stockRes.data?.filter(item => 
-      item.quantidade <= item.alerta_minimo
+      (item.quantidade_atual || 0) <= (item.quantidade_minima || 0)
     ).length || 0;
 
     setStats({
@@ -109,9 +110,9 @@ export function useOrganizationData() {
       indicationsRes,
       employeesRes
     ] = await Promise.all([
-      supabase.from('produtos').select('id').eq('org_id', currentOrg!.id).eq('ativo', true),
-      supabase.from('indicacoes_produto').select('*').eq('org_id', currentOrg!.id),
-      supabase.from('user_profiles').select('id').eq('org_id', currentOrg!.id)
+      supabase.from('catalog_products').select('id').eq('company_id', currentOrg!.id).eq('ativo', true),
+      supabase.from('company_products').select('*').eq('company_id', currentOrg!.id),
+      supabase.from('profiles').select('id').eq('company_id', currentOrg!.id)
     ]);
 
     setStats({
@@ -135,11 +136,11 @@ export function useOrganizationData() {
       employeesRes,
       eventsRes
     ] = await Promise.all([
-      supabase.from('lotes').select('id').eq('org_id', currentOrg!.id),
-      supabase.from('animais_fazenda').select('peso').eq('org_id', currentOrg!.id),
-      supabase.from('vacinacoes').select('id').eq('org_id', currentOrg!.id),
-      supabase.from('user_profiles').select('id').eq('org_id', currentOrg!.id),
-      supabase.from('eventos_zootecnicos').select('*').eq('org_id', currentOrg!.id).order('created_at', { ascending: false }).limit(10)
+      supabase.from('lotes').select('id').eq('company_id', currentOrg!.id),
+      supabase.from('animais').select('peso').eq('company_id', currentOrg!.id),
+      supabase.from('historico_saude').select('id').eq('company_id', currentOrg!.id),
+      supabase.from('profiles').select('id').eq('company_id', currentOrg!.id),
+      supabase.from('tarefas_diarias').select('*').eq('company_id', currentOrg!.id).order('created_at', { ascending: false }).limit(10)
     ]);
 
     const avgWeight = animalsRes.data?.reduce((sum, animal) => 

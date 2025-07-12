@@ -13,7 +13,7 @@ import {
   Tractor
 } from "lucide-react";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { useOrganizationData } from "@/hooks/useOrganizationData";
+import { useOrganizationData, VetStats, CompanyStats, FarmStats } from "@/hooks/useOrganizationData";
 import { VetDashboard } from "./VetDashboard";
 import { CompanyDashboard } from "./CompanyDashboard";
 import { FarmDashboard } from "./FarmDashboard";
@@ -59,26 +59,14 @@ export default function InfinityVetDashboard() {
   }
 
   // Renderizar dashboard específico por tipo de organização
-  switch (currentOrg.type) {
-    case 'vet':
-      return <VetDashboard stats={stats} />;
-    case 'empresa':
-      return <CompanyDashboard stats={stats} />;
-    case 'fazenda':
-      return <FarmDashboard stats={stats} />;
+  switch (currentOrg.company_type) {
+    case 'veterinario':
+      return <VetDashboard stats={stats as VetStats} />;
+    case 'empresa_alimento':
+    case 'empresa_medicamento':
+      return <CompanyDashboard stats={stats as CompanyStats} />;
     default:
-      return (
-        <div className="p-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Tipo de organização não reconhecido</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>O tipo de organização "{currentOrg.type}" não é suportado.</p>
-            </CardContent>
-          </Card>
-        </div>
-      );
+      return <FarmDashboard stats={stats as FarmStats} />;
   }
 }
 
@@ -86,48 +74,47 @@ export default function InfinityVetDashboard() {
 export function DashboardHeader() {
   const { currentOrg, userProfile } = useOrganization();
 
-  const getOrgIcon = (type: string) => {
+  const getOrgIcon = (type: string | null) => {
     switch (type) {
-      case 'vet':
+      case 'veterinario':
         return <Stethoscope className="h-5 w-5" />;
-      case 'empresa':
+      case 'empresa_alimento':
+      case 'empresa_medicamento':
         return <Building2 className="h-5 w-5" />;
-      case 'fazenda':
-        return <Tractor className="h-5 w-5" />;
       default:
-        return <Activity className="h-5 w-5" />;
+        return <Tractor className="h-5 w-5" />;
     }
   };
 
-  const getOrgTypeLabel = (type: string) => {
+  const getOrgTypeLabel = (type: string | null) => {
     switch (type) {
-      case 'vet':
+      case 'veterinario':
         return 'Clínica Veterinária';
-      case 'empresa':
-        return 'Empresa de Nutrição';
-      case 'fazenda':
-        return 'Fazenda/Agropecuária';
+      case 'empresa_alimento':
+        return 'Empresa de Alimentos';
+      case 'empresa_medicamento':
+        return 'Empresa de Medicamentos';
       default:
-        return type;
+        return 'Agropecuária';
     }
   };
 
   return (
     <div className="mb-8">
       <div className="flex items-center gap-3 mb-2">
-        {currentOrg && getOrgIcon(currentOrg.type)}
+        {currentOrg && getOrgIcon(currentOrg.company_type)}
         <h1 className="text-3xl font-bold">
           {currentOrg?.name || 'InfinityVet'}
         </h1>
         {currentOrg && (
           <Badge variant="secondary">
-            {getOrgTypeLabel(currentOrg.type)}
+            {getOrgTypeLabel(currentOrg.company_type)}
           </Badge>
         )}
       </div>
       <p className="text-muted-foreground">
         Bem-vindo, {userProfile?.nome}! 
-        {currentOrg && ` Plano ${currentOrg.plan.toUpperCase()}`}
+        {currentOrg && ` Plano ${currentOrg.subscription_plan?.toUpperCase()}`}
       </p>
     </div>
   );
@@ -150,30 +137,30 @@ export function PlanSummary() {
         <div>
           <div className="flex justify-between text-sm mb-1">
             <span>Animais</span>
-            <span>{stats.totalAnimals}/{currentOrg.limite_animais}</span>
+            <span>{stats.totalAnimals}/{currentOrg.max_animals || 100}</span>
           </div>
-          <Progress value={(stats.totalAnimals / currentOrg.limite_animais) * 100} />
+          <Progress value={(stats.totalAnimals / (currentOrg.max_animals || 100)) * 100} />
         </div>
         
         <div>
           <div className="flex justify-between text-sm mb-1">
             <span>Produtos</span>
-            <span>{stats.totalProducts}/{currentOrg.limite_produtos}</span>
+            <span>{stats.totalProducts}/{currentOrg.max_products || 50}</span>
           </div>
-          <Progress value={(stats.totalProducts / currentOrg.limite_produtos) * 100} />
+          <Progress value={(stats.totalProducts / (currentOrg.max_products || 50)) * 100} />
         </div>
 
         <div>
           <div className="flex justify-between text-sm mb-1">
             <span>Funcionários</span>
-            <span>{stats.totalEmployees}/{currentOrg.limite_funcionarios}</span>
+            <span>{stats.totalEmployees}/{currentOrg.max_users || 5}</span>
           </div>
-          <Progress value={(stats.totalEmployees / currentOrg.limite_funcionarios) * 100} />
+          <Progress value={(stats.totalEmployees / (currentOrg.max_users || 5)) * 100} />
         </div>
 
         <div className="pt-4">
           <Badge variant="secondary" className="w-full justify-center">
-            Plano {currentOrg.plan.toUpperCase()}
+            Plano {currentOrg.subscription_plan?.toUpperCase() || 'BÁSICO'}
           </Badge>
         </div>
       </CardContent>
