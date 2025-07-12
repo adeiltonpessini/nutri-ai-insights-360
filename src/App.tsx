@@ -2,12 +2,12 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import { CompanyProvider } from './contexts/CompanyContext';
+import { OrganizationProvider } from './contexts/OrganizationContext';
 import LandingPage from './components/LandingPage';
 import Auth from './pages/Auth';
 import Pricing from './pages/Pricing';
 import AcceptInvitation from './pages/AcceptInvitation';
-import Dashboard from './pages/Dashboard';
+import InfinityVetDashboard from './components/dashboards/InfinityVetDashboard';
 import Propriedades from './pages/Propriedades';
 import Produtos from './pages/Produtos';
 import Configuracoes from './pages/Configuracoes';
@@ -34,7 +34,7 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <CompanyProvider>
+        <OrganizationProvider>
           <QueryClientProvider client={queryClient}>
             <Routes>
               <Route path="/" element={<LandingPage />} />
@@ -44,7 +44,7 @@ function App() {
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <Layout>
-                    <Dashboard />
+                    <InfinityVetDashboard />
                   </Layout>
                 </ProtectedRoute>
               } />
@@ -144,7 +144,7 @@ function App() {
             <Toaster />
             <OnboardingModal />
           </QueryClientProvider>
-        </CompanyProvider>
+        </OrganizationProvider>
       </AuthProvider>
     </Router>
   );

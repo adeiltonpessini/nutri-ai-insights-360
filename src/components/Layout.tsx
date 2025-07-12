@@ -2,18 +2,18 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { NotificationToast } from "@/components/ui/notification-toast";
-import { CompanySelector } from "@/components/CompanySelector";
 import { Button } from "@/components/ui/button";
-import { useCompany } from "@/contexts/CompanyContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { OrganizationSelector } from "@/components/OrganizationSelector";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 export function Layout({ children }: LayoutProps) {
-  const { currentCompany, isLoading } = useCompany();
+  const { currentOrg, userProfile, isLoading } = useOrganization();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -34,11 +34,11 @@ export function Layout({ children }: LayoutProps) {
             <div className="flex items-center gap-4">
               <SidebarTrigger />
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-primary to-tech-blue rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">VS</span>
+                <div className="w-8 h-8 bg-gradient-to-r from-primary to-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">IV</span>
                 </div>
-                <h1 className="font-bold text-xl bg-gradient-to-r from-primary to-tech-blue bg-clip-text text-transparent">
-                  VetSaaS Pro
+                <h1 className="font-bold text-xl bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+                  InfinityVet
                 </h1>
               </div>
             </div>
@@ -46,10 +46,12 @@ export function Layout({ children }: LayoutProps) {
               <Button variant="outline" onClick={() => navigate("/pricing")}>
                 Planos
               </Button>
-              <CompanySelector />
+              <OrganizationSelector />
               <NotificationToast />
               <div className="text-sm text-muted-foreground">
-                Bem-vindo, <span className="font-medium text-foreground">{user?.email}</span>
+                Bem-vindo, <span className="font-medium text-foreground">
+                  {userProfile?.nome || user?.email}
+                </span>
               </div>
             </div>
           </header>
