@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCompany } from '@/contexts/CompanyContext';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, Plus, X } from 'lucide-react';
@@ -18,7 +18,7 @@ interface OnboardingTeamProps {
 
 export function OnboardingTeam({ onNext }: OnboardingTeamProps) {
   const { user } = useAuth();
-  const { currentCompany } = useCompany();
+  const { currentOrg } = useOrganization();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [invitations, setInvitations] = useState<Array<{email: string, role: string}>>([]);
@@ -45,7 +45,7 @@ export function OnboardingTeam({ onNext }: OnboardingTeamProps) {
   };
 
   const sendInvitations = async () => {
-    if (!currentCompany || !user) return;
+    if (!currentOrg || !user) return;
 
     try {
       setLoading(true);
@@ -55,7 +55,7 @@ export function OnboardingTeam({ onNext }: OnboardingTeamProps) {
           body: {
             email: invitation.email,
             role: invitation.role,
-            companyId: currentCompany.id
+            companyId: currentOrg.id
           }
         });
 
