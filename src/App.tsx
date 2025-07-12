@@ -3,7 +3,6 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { OrganizationProvider } from './contexts/OrganizationContext';
-import { CompanyProvider } from './contexts/CompanyContext';
 import LandingPage from './components/LandingPage';
 import Auth from './pages/Auth';
 import Pricing from './pages/Pricing';
@@ -36,8 +35,7 @@ function App() {
     <Router>
       <AuthProvider>
         <OrganizationProvider>
-          <CompanyProvider>
-            <QueryClientProvider client={queryClient}>
+          <QueryClientProvider client={queryClient}>
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/auth" element={<Auth />} />
@@ -146,7 +144,6 @@ function App() {
             <Toaster />
             <OnboardingModal />
           </QueryClientProvider>
-          </CompanyProvider>
         </OrganizationProvider>
       </AuthProvider>
     </Router>
