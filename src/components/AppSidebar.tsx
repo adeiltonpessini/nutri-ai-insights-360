@@ -27,7 +27,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { useCompany } from "@/contexts/CompanyContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { NavLink } from "react-router-dom";
 
 const veterinarioItems = [
@@ -110,12 +110,12 @@ const adminItems = [
 ];
 
 export function AppSidebar() {
-  const { currentCompany } = useCompany();
+  const { currentOrg } = useOrganization();
 
   const getMenuItems = () => {
-    if (!currentCompany) return [];
+    if (!currentOrg) return [];
     
-    switch (currentCompany.company_type) {
+    switch (currentOrg.company_type) {
       case "veterinario":
         return veterinarioItems;
       case "empresa_alimento":
@@ -138,9 +138,9 @@ export function AppSidebar() {
           </div>
           <div>
             <h2 className="font-bold text-sm">VetSaaS Pro</h2>
-            {currentCompany && (
+            {currentOrg && (
               <p className="text-xs text-muted-foreground truncate">
-                {currentCompany.name}
+                {currentOrg.name}
               </p>
             )}
           </div>
@@ -175,7 +175,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {currentCompany?.company_type === "geral" && (
+        {currentOrg?.company_type === "geral" && (
           <SidebarGroup>
             <SidebarGroupLabel>Administração</SidebarGroupLabel>
             <SidebarGroupContent>
