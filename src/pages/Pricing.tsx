@@ -3,8 +3,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, Star, ArrowLeft, CreditCard, Shield, Zap, Users, Heart, Award, Phone, Clock, TrendingUp } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Check, Star, ArrowLeft, CreditCard, Shield, Zap, Users, Heart, Award, Phone, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -37,7 +37,7 @@ const PLANS: SubscriptionPlan[] = [
     maxAnimals: 100,
     maxUsers: 3,
     maxProducts: 50,
-    color: 'from-infinity-blue to-blue-600',
+    color: 'bg-gradient-primary',
     icon: <Heart className="w-6 h-6" />,
     features: [
       'Até 100 animais cadastrados',
@@ -61,7 +61,7 @@ const PLANS: SubscriptionPlan[] = [
     maxUsers: 10,
     maxProducts: 200,
     popular: true,
-    color: 'from-vital-green to-green-600',
+    color: 'bg-gradient-vital',
     icon: <Award className="w-6 h-6" />,
     features: [
       'Até 500 animais cadastrados',
@@ -86,7 +86,7 @@ const PLANS: SubscriptionPlan[] = [
     maxAnimals: -1,
     maxUsers: 50,
     maxProducts: -1,
-    color: 'from-gray-800 to-gray-900',
+    color: 'bg-gradient-to-r from-gray-800 to-gray-900',
     icon: <TrendingUp className="w-6 h-6" />,
     features: [
       'Animais ilimitados',
@@ -145,7 +145,6 @@ export default function Pricing() {
 
     setLoading(true);
     try {
-      // Mock checkout process - in real implementation, this would call Stripe
       toast({
         title: "Funcionalidade em desenvolvimento",
         description: "O sistema de pagamento será implementado em breve.",
@@ -172,9 +171,9 @@ export default function Pricing() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-muted/30">
+    <div className="min-h-screen bg-gradient-subtle">
       {/* Header */}
-      <div className="bg-white border-b border-border shadow-sm">
+      <div className="bg-card border-b border-border shadow-soft">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -183,10 +182,10 @@ export default function Pricing() {
                 Voltar
               </Button>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-infinity-blue to-vital-green rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-gradient-hero rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-sm">∞</span>
                 </div>
-                <span className="font-semibold text-gray-900">InfinityVet</span>
+                <span className="font-semibold text-foreground">InfinityVet</span>
               </div>
             </div>
             {!user && (
@@ -200,14 +199,14 @@ export default function Pricing() {
 
       <div className="container mx-auto px-4 py-12">
         {/* Hero Section */}
-        <div className="text-center mb-16">
-          <div className="mx-auto w-20 h-20 bg-gradient-to-r from-infinity-blue to-vital-green rounded-2xl flex items-center justify-center mb-8 shadow-lg">
+        <div className="text-center mb-16 animate-fade-in">
+          <div className="mx-auto w-20 h-20 bg-gradient-hero rounded-2xl flex items-center justify-center mb-8 shadow-glow">
             <Shield className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-infinity-blue to-vital-green bg-clip-text text-transparent">
+          <h1 className="text-5xl font-heading font-bold mb-6 bg-gradient-hero bg-clip-text text-transparent">
             Planos InfinityVet
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Gestão inteligente, sustentável e sem limites para veterinários, empresas e fazendas. 
             Escolha o plano ideal para sua operação.
           </p>
@@ -228,22 +227,23 @@ export default function Pricing() {
 
         {/* Plans Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto mb-16">
-          {PLANS.map((plan) => {
+          {PLANS.map((plan, index) => {
             const price = billingInterval === 'year' ? getYearlyPrice(plan.price) : plan.price;
             const isCurrentPlan = currentPlan === plan.id;
             
             return (
               <Card 
                 key={plan.id} 
-                className={`relative transition-all duration-300 hover:shadow-xl ${
+                className={`relative transition-all duration-300 hover:shadow-strong animate-fade-in group ${
                   plan.popular 
-                    ? 'border-2 border-vital-green shadow-lg scale-105 bg-gradient-to-b from-white to-green-50' 
-                    : 'border border-gray-200 hover:border-gray-300'
-                } ${isCurrentPlan ? 'ring-2 ring-infinity-blue' : ''}`}
+                    ? 'border-2 border-vital-green shadow-strong scale-105 bg-gradient-card' 
+                    : 'border border-border hover:border-muted-foreground'
+                } ${isCurrentPlan ? 'ring-2 ring-primary' : ''}`}
+                style={{ animationDelay: `${index * 100}ms` }}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-vital-green text-white px-4 py-2 text-sm font-medium">
+                    <Badge className="bg-vital-green text-white px-4 py-2 text-sm font-medium shadow-medium">
                       <Star className="w-3 h-3 mr-1" />
                       Mais Popular
                     </Badge>
@@ -251,16 +251,16 @@ export default function Pricing() {
                 )}
                 
                 <CardHeader className="text-center pb-6">
-                  <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-r ${plan.color} flex items-center justify-center text-white mb-6 shadow-lg`}>
+                  <div className={`w-16 h-16 mx-auto rounded-2xl ${plan.color} flex items-center justify-center text-white mb-6 shadow-medium group-hover:shadow-strong transition-all duration-300`}>
                     {plan.icon}
                   </div>
-                  <CardTitle className="text-2xl font-bold text-gray-900">{plan.name}</CardTitle>
-                  <CardDescription className="text-gray-600 text-base mt-2">{plan.description}</CardDescription>
+                  <CardTitle className="text-2xl font-heading font-bold text-card-foreground">{plan.name}</CardTitle>
+                  <CardDescription className="text-muted-foreground text-base mt-2">{plan.description}</CardDescription>
                   
                   <div className="mt-6">
                     <div className="flex items-baseline justify-center">
-                      <span className="text-4xl font-bold text-gray-900">R$ {formatPrice(price)}</span>
-                      <span className="text-gray-600 ml-1">
+                      <span className="text-4xl font-heading font-bold text-card-foreground">R$ {formatPrice(price)}</span>
+                      <span className="text-muted-foreground ml-1">
                         /{billingInterval === 'month' ? 'mês' : 'ano'}
                       </span>
                     </div>
@@ -277,7 +277,7 @@ export default function Pricing() {
                     {plan.features.map((feature, index) => (
                       <li key={index} className="flex items-start gap-3">
                         <Check className="w-5 h-5 text-vital-green shrink-0 mt-0.5" />
-                        <span className="text-gray-700">{feature}</span>
+                        <span className="text-card-foreground">{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -286,12 +286,12 @@ export default function Pricing() {
                     onClick={() => handleSelectPlan(plan)}
                     disabled={loading || isCurrentPlan}
                     size="lg"
-                    className={`w-full mt-8 h-12 text-base font-medium ${
+                    className={`w-full mt-8 h-12 text-base font-medium transition-smooth ${
                       plan.popular 
-                        ? 'bg-vital-green hover:bg-green-600 text-white' 
+                        ? 'bg-vital-green hover:bg-vital-green-dark text-white' 
                         : isCurrentPlan
-                        ? 'bg-infinity-blue hover:bg-blue-600 text-white'
-                        : 'bg-gray-900 hover:bg-gray-800 text-white'
+                        ? 'bg-primary hover:bg-primary-dark text-primary-foreground'
+                        : 'bg-card-foreground hover:bg-muted-foreground text-card'
                     }`}
                   >
                     {loading ? (
@@ -309,74 +309,78 @@ export default function Pricing() {
         </div>
 
         {/* Features Section */}
-        <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200 mb-16">
-          <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">
+        <div className="bg-card rounded-2xl p-8 shadow-medium border border-border mb-16">
+          <h2 className="text-3xl font-heading font-bold text-center mb-12 text-card-foreground">
             Por que escolher o InfinityVet?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto bg-gradient-to-r from-infinity-blue to-blue-600 rounded-2xl flex items-center justify-center mb-4">
+            <div className="text-center group">
+              <div className="w-16 h-16 mx-auto bg-gradient-primary rounded-2xl flex items-center justify-center mb-4 group-hover:shadow-glow transition-all duration-300">
                 <Shield className="w-8 h-8 text-white" />
               </div>
-              <h3 className="font-semibold text-lg mb-2 text-gray-900">Segurança Total</h3>
-              <p className="text-gray-600">Dados protegidos com criptografia de ponta e backup automático</p>
+              <h3 className="font-heading font-semibold text-lg mb-2 text-card-foreground">Segurança Total</h3>
+              <p className="text-muted-foreground">Dados protegidos com criptografia de ponta e backup automático</p>
             </div>
             
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto bg-gradient-to-r from-vital-green to-green-600 rounded-2xl flex items-center justify-center mb-4">
+            <div className="text-center group">
+              <div className="w-16 h-16 mx-auto bg-gradient-vital rounded-2xl flex items-center justify-center mb-4 group-hover:shadow-glow transition-all duration-300">
                 <Zap className="w-8 h-8 text-white" />
               </div>
-              <h3 className="font-semibold text-lg mb-2 text-gray-900">IA Avançada</h3>
-              <p className="text-gray-600">Diagnósticos inteligentes e recomendações personalizadas</p>
+              <h3 className="font-heading font-semibold text-lg mb-2 text-card-foreground">IA Avançada</h3>
+              <p className="text-muted-foreground">Diagnósticos inteligentes e recomendações personalizadas</p>
             </div>
             
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4">
+            <div className="text-center group">
+              <div className="w-16 h-16 mx-auto bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 group-hover:shadow-glow transition-all duration-300">
                 <Users className="w-8 h-8 text-white" />
               </div>
-              <h3 className="font-semibold text-lg mb-2 text-gray-900">Gestão de Equipe</h3>
-              <p className="text-gray-600">Controle total sobre usuários, permissões e atividades</p>
+              <h3 className="font-heading font-semibold text-lg mb-2 text-card-foreground">Gestão de Equipe</h3>
+              <p className="text-muted-foreground">Controle total sobre usuários, permissões e atividades</p>
             </div>
             
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mb-4">
+            <div className="text-center group">
+              <div className="w-16 h-16 mx-auto bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mb-4 group-hover:shadow-glow transition-all duration-300">
                 <Phone className="w-8 h-8 text-white" />
               </div>
-              <h3 className="font-semibold text-lg mb-2 text-gray-900">Suporte Dedicado</h3>
-              <p className="text-gray-600">Equipe especializada pronta para ajudar quando precisar</p>
+              <h3 className="font-heading font-semibold text-lg mb-2 text-card-foreground">Suporte Dedicado</h3>
+              <p className="text-muted-foreground">Equipe especializada pronta para ajudar quando precisar</p>
             </div>
           </div>
         </div>
 
         {/* FAQ Section */}
         <div className="max-w-4xl mx-auto mb-16">
-          <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">Perguntas Frequentes</h2>
+          <h2 className="text-3xl font-heading font-bold text-center mb-12 text-foreground">Perguntas Frequentes</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <Card className="p-6 border border-gray-200">
-              <h3 className="font-semibold text-lg mb-3 text-gray-900">Posso cancelar a qualquer momento?</h3>
-              <p className="text-gray-600">Sim, você pode cancelar sua assinatura a qualquer momento sem taxas adicionais.</p>
-            </Card>
-            
-            <Card className="p-6 border border-gray-200">
-              <h3 className="font-semibold text-lg mb-3 text-gray-900">Há período de teste gratuito?</h3>
-              <p className="text-gray-600">Oferecemos 14 dias de teste gratuito para todos os planos, sem compromisso.</p>
-            </Card>
-            
-            <Card className="p-6 border border-gray-200">
-              <h3 className="font-semibold text-lg mb-3 text-gray-900">Meus dados ficam seguros?</h3>
-              <p className="text-gray-600">Utilizamos criptografia de ponta e backup automático para garantir a segurança total dos seus dados.</p>
-            </Card>
-            
-            <Card className="p-6 border border-gray-200">
-              <h3 className="font-semibold text-lg mb-3 text-gray-900">Posso mudar de plano depois?</h3>
-              <p className="text-gray-600">Sim, você pode fazer upgrade ou downgrade do seu plano a qualquer momento.</p>
-            </Card>
+            {[
+              {
+                question: "Posso cancelar a qualquer momento?",
+                answer: "Sim, você pode cancelar sua assinatura a qualquer momento sem taxas adicionais."
+              },
+              {
+                question: "Há período de teste gratuito?",
+                answer: "Oferecemos 14 dias de teste gratuito para todos os planos, sem compromisso."
+              },
+              {
+                question: "Meus dados ficam seguros?",
+                answer: "Utilizamos criptografia de ponta e backup automático para garantir a segurança total dos seus dados."
+              },
+              {
+                question: "Posso mudar de plano depois?",
+                answer: "Sim, você pode fazer upgrade ou downgrade do seu plano a qualquer momento."
+              }
+            ].map((faq, index) => (
+              <Card key={index} className="p-6 border border-border shadow-soft hover:shadow-medium transition-smooth">
+                <h3 className="font-heading font-semibold text-lg mb-3 text-card-foreground">{faq.question}</h3>
+                <p className="text-muted-foreground">{faq.answer}</p>
+              </Card>
+            ))}
           </div>
         </div>
 
         {/* CTA Section */}
-        <div className="text-center bg-gradient-to-r from-infinity-blue to-vital-green rounded-2xl p-12 text-white">
-          <h2 className="text-3xl font-bold mb-4">Pronto para transformar sua gestão?</h2>
+        <div className="text-center bg-gradient-hero rounded-2xl p-12 text-white shadow-strong">
+          <h2 className="text-3xl font-heading font-bold mb-4">Pronto para transformar sua gestão?</h2>
           <p className="text-xl mb-8 opacity-90">
             Junte-se a milhares de profissionais que já confiam no InfinityVet
           </p>
@@ -385,14 +389,14 @@ export default function Pricing() {
               size="lg" 
               variant="secondary"
               onClick={() => navigate('/auth')}
-              className="bg-white text-infinity-blue hover:bg-gray-100 font-medium"
+              className="bg-white text-primary hover:bg-secondary font-medium transition-smooth"
             >
               Começar Teste Gratuito
             </Button>
             <Button 
               size="lg" 
               variant="outline"
-              className="border-white text-white hover:bg-white hover:text-infinity-blue font-medium"
+              className="border-white text-white hover:bg-white hover:text-primary font-medium transition-smooth"
             >
               Falar com Consultor
             </Button>

@@ -10,13 +10,13 @@ All colors MUST be HSL.
   :root {
     /* InfinityVet Brand Colors - HSL Format */
     --background: 0 0% 100%;
-    --foreground: 0 0% 29%;
+    --foreground: 0 0% 13%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 29%;
+    --card-foreground: 0 0% 13%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 29%;
+    --popover-foreground: 0 0% 13%;
 
     /* Primary - Azul Infinity */
     --primary: 217 91% 59%;
@@ -26,7 +26,7 @@ All colors MUST be HSL.
 
     /* Secondary - Cinza Neutro */
     --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 29%;
+    --secondary-foreground: 0 0% 13%;
 
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 45%;
@@ -35,17 +35,16 @@ All colors MUST be HSL.
     --accent: 142 71% 45%;
     --accent-foreground: 0 0% 98%;
 
-    /* Tech blue - Azul Infinity variants */
-    --tech-blue: 217 91% 59%;
-    --tech-blue-foreground: 0 0% 98%;
-    --tech-blue-light: 217 91% 70%;
+    /* InfinityVet Cores Especiais */
+    --infinity-blue: 217 91% 59%;
+    --infinity-blue-light: 217 91% 70%;
+    --infinity-blue-dark: 217 91% 45%;
+    
+    --vital-green: 142 71% 45%;
+    --vital-green-light: 142 71% 55%;
+    --vital-green-dark: 142 71% 35%;
 
-    /* Sustainability - Verde Vital */
-    --sustainability: 142 71% 45%;
-    --sustainability-foreground: 0 0% 98%;
-    --sustainability-light: 142 71% 55%;
-
-    /* Warning and success states */
+    /* Estados */
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 98%;
     --success: 142 71% 45%;
@@ -60,38 +59,32 @@ All colors MUST be HSL.
 
     /* InfinityVet Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(217 91% 59%), hsl(217 91% 70%));
-    --gradient-tech: linear-gradient(135deg, hsl(217 91% 59%), hsl(217 91% 70%));
-    --gradient-sustainability: linear-gradient(135deg, hsl(142 71% 45%), hsl(142 71% 55%));
+    --gradient-vital: linear-gradient(135deg, hsl(142 71% 45%), hsl(142 71% 55%));
     --gradient-hero: linear-gradient(135deg, hsl(217 91% 59%) 0%, hsl(142 71% 45%) 100%);
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(0 0% 98%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 98%) 0%, hsl(0 0% 96%) 100%);
 
     /* Shadows */
-    --shadow-soft: 0 4px 20px -2px hsl(217 91% 59% / 0.1);
-    --shadow-medium: 0 8px 30px -6px hsl(217 91% 59% / 0.15);
-    --shadow-strong: 0 20px 40px -10px hsl(217 91% 59% / 0.2);
+    --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.1);
+    --shadow-medium: 0 4px 12px -3px hsl(0 0% 0% / 0.15);
+    --shadow-strong: 0 8px 24px -6px hsl(0 0% 0% / 0.2);
     --shadow-glow: 0 0 30px hsl(217 91% 59% / 0.3);
 
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-spring: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
+    /* Sidebar */
     --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
+    --sidebar-foreground: 0 0% 13%;
+    --sidebar-primary: 217 91% 59%;
     --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 13%;
+    --sidebar-border: 0 0% 88%;
+    --sidebar-ring: 217 91% 59%;
   }
 
   .dark {

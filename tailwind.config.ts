@@ -58,15 +58,15 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				'tech-blue': {
-					DEFAULT: 'hsl(var(--tech-blue))',
-					foreground: 'hsl(var(--tech-blue-foreground))',
-					light: 'hsl(var(--tech-blue-light))'
+				'infinity-blue': {
+					DEFAULT: 'hsl(var(--infinity-blue))',
+					light: 'hsl(var(--infinity-blue-light))',
+					dark: 'hsl(var(--infinity-blue-dark))'
 				},
-				sustainability: {
-					DEFAULT: 'hsl(var(--sustainability))',
-					foreground: 'hsl(var(--sustainability-foreground))',
-					light: 'hsl(var(--sustainability-light))'
+				'vital-green': {
+					DEFAULT: 'hsl(var(--vital-green))',
+					light: 'hsl(var(--vital-green-light))',
+					dark: 'hsl(var(--vital-green-dark))'
 				},
 				warning: {
 					DEFAULT: 'hsl(var(--warning))',
@@ -89,10 +89,10 @@ export default {
 			},
 			backgroundImage: {
 				'gradient-primary': 'var(--gradient-primary)',
-				'gradient-tech': 'var(--gradient-tech)',
-				'gradient-sustainability': 'var(--gradient-sustainability)',
+				'gradient-vital': 'var(--gradient-vital)',
 				'gradient-hero': 'var(--gradient-hero)',
 				'gradient-card': 'var(--gradient-card)',
+				'gradient-subtle': 'var(--gradient-subtle)',
 			},
 			boxShadow: {
 				'soft': 'var(--shadow-soft)',
