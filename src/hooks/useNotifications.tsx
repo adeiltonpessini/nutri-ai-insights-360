@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useCompany } from '@/contexts/CompanyContext';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
 
 export interface Notification {
@@ -21,11 +21,11 @@ export interface Notification {
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const { currentCompany } = useCompany();
+  const { currentOrg } = useOrganization();
   const { user } = useAuth();
 
   const generateNotifications = async () => {
-    if (!currentCompany || !user) return;
+    if (!currentOrg || !user) return;
 
     const newNotifications: Notification[] = [];
 
@@ -34,7 +34,7 @@ export function useNotifications() {
       const { data: performanceData } = await supabase
         .from('performance_historico')
         .select('*, lotes(nome)')
-        .eq('company_id', currentCompany.id)
+        .eq('company_id', currentOrg.id)
         .gte('data_medicao', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
         .order('data_medicao', { ascending: false });
 
@@ -63,7 +63,7 @@ export function useNotifications() {
       const { data: formulacoes } = await supabase
         .from('formulacoes')
         .select('*')
-        .eq('company_id', currentCompany.id)
+        .eq('company_id', currentOrg.id)
         .eq('is_favorita', true)
         .order('created_at', { ascending: false })
         .limit(2);
@@ -89,7 +89,7 @@ export function useNotifications() {
       const { data: diagnosticos } = await supabase
         .from('diagnosticos')
         .select('*')
-        .eq('company_id', currentCompany.id)
+        .eq('company_id', currentOrg.id)
         .order('created_at', { ascending: false })
         .limit(3);
 
@@ -118,7 +118,7 @@ export function useNotifications() {
       const { data: sustainability } = await supabase
         .from('sustentabilidade')
         .select('*')
-        .eq('company_id', currentCompany.id)
+        .eq('company_id', currentOrg.id)
         .order('created_at', { ascending: false })
         .limit(1);
 
@@ -166,14 +166,14 @@ export function useNotifications() {
   };
 
   useEffect(() => {
-    if (currentCompany && user) {
+    if (currentOrg && user) {
       generateNotifications();
       
       // Atualizar notificações a cada 5 minutos
       const interval = setInterval(generateNotifications, 5 * 60 * 1000);
       return () => clearInterval(interval);
     }
-  }, [currentCompany, user]);
+  }, [currentOrg, user]);
 
   return {
     notifications,
